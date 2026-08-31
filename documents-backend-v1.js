@@ -26,11 +26,9 @@
   async function loadDocuments(){
     if(!token()||typeof state==='undefined'||!Array.isArray(state.documents))return [];
     const rows=await dbRequest('documents?select=*&order=created_at.desc');
-    const remoteIds=new Set();
     for(const row of rows){
-      remoteIds.add(row.id);
       let d=state.documents.find(x=>x.backendId===row.id);
-      if(!d)d=state.documents.find(x=>x.name===row.name && (!x.storageProvider||x.storageProvider==='supabase'));
+      if(!d)d=state.documents.find(x=>String(x.name||'').trim().toLowerCase()===String(row.name||'').trim().toLowerCase());
       if(!d){
         d={id:`db-${row.id}`,name:row.name,category:row.category||'Otros'};
         state.documents.push(d);
@@ -47,6 +45,7 @@
       d.updated=row.updated_at||row.created_at;
       d.objectUrl=`postula-storage:${row.storage_path}`;
       d.downloadUrl=d.objectUrl;
+      d.previewUrl=d.objectUrl;
     }
     try{save()}catch{}
     try{render()}catch{}
