@@ -12,9 +12,10 @@
     'gmail-sciencespo-dossier':'documents/applications/Dossier_FSI_MAJ_2021-2022_completo.doc'
   };
   const enc=p=>p.split('/').map(encodeURIComponent).join('/');
-  const urls=d=>{const p=paths[d?.id];return p?{view:VIEW+enc(p),download:RAW+enc(p)}:null};
+  const urls=d=>{const p=paths[d?.id];return p?{view:VIEW+enc(p),download:RAW+enc(p),path:p}:null};
   const label=d=>d?.status==='located'?`${d.sourceYear||'Histórico'}${d.needsUpdate?' · actualizar':''}`:(d?.sourceYear||'Pendiente');
   const mark=d=>{const n=(d?.name||'').toLowerCase();return n.endsWith('.pdf')?'PDF':(n.endsWith('.doc')||n.endsWith('.docx'))?'DOC':d?.category==='CV'?'CV':'DOC'};
+  const isPdf=d=>/\.pdf$/i.test(urls(d)?.path||d?.name||'');
   const matches=(d,q)=>{
     const n=(d.name||'').toLowerCase(),id=(q.id||'').toLowerCase(),l=(q.label||'').toLowerCase();
     if(id==='cv'||l.includes('cv'))return d.category==='CV'||/\bcv\b|curriculum/.test(n);
@@ -25,7 +26,28 @@
     if(id==='recommendation'||l.includes('recomend'))return d.category==='Recomendaciones'||/recomend|recommend/.test(n);
     return d.category===q.category;
   };
-  const actionButtons=d=>{const u=urls(d);if(!u)return '<span class="doc-list-action">Ver</span>';return `<div class="doc-list-actions"><a href="${esc(u.view)}" target="_blank" rel="noopener">Visualizar</a><a href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div>`};
+
+  function openViewer(d){
+    const u=urls(d);if(!u)return;
+    const modal=document.querySelector('#modal');
+    modal.classList.add('viewer-modal');
+    const body=isPdf(d)?`<div class="viewer-frame" id="viewer-frame"><div class="viewer-empty"><b>Cargando documento…</b><span>Intentando abrir el PDF privado.</span></div></div>`:`<div class="viewer-frame"><div class="viewer-empty"><b>Vista previa no disponible</b><span>Este formato no se puede visualizar todavía dentro de Postula. Puedes descargar el original.</span></div></div>`;
+    openModal(`<div class="viewer-shell"><div class="viewer-toolbar"><strong>${esc(d.name)}</strong><div class="viewer-actions"><a class="button soft" href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div></div>${body}</div>`);
+    if(!isPdf(d))return;
+    fetch(u.download,{credentials:'include'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.blob()}).then(blob=>{
+      const frame=document.querySelector('#viewer-frame');if(!frame)return;
+      const objectUrl=URL.createObjectURL(blob);
+      frame.innerHTML=`<object data="${esc(objectUrl)}" type="application/pdf"><div class="viewer-empty"><b>No se pudo incrustar el PDF</b><span>Usa Descargar para abrir el original.</span></div></object>`;
+      modal.addEventListener('close',()=>URL.revokeObjectURL(objectUrl),{once:true});
+    }).catch(()=>{
+      const frame=document.querySelector('#viewer-frame');if(frame)frame.innerHTML='<div class="viewer-empty"><b>El PDF privado necesita autenticación</b><span>El visor ya está preparado, pero GitHub no entrega este archivo privado a una página pública. Cuando añadamos el login de Postula, se cargará aquí directamente.</span></div>';
+    });
+  }
+
+  function closeViewerClass(){document.querySelector('#modal')?.classList.remove('viewer-modal')}
+  document.querySelector('#modal')?.addEventListener('close',closeViewerClass);
+
+  const actionButtons=d=>{const u=urls(d);if(!u)return '<span class="doc-list-action">Ver</span>';return `<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><a href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div>`};
 
   docsPage=function(){
     const cats=['CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'];
@@ -43,13 +65,14 @@
     }
     const candidates=state.documents.filter(d=>matches(d,q));
     const best=candidates.find(d=>d.status==='ready')||candidates.find(d=>d.status==='located')||candidates[0];
-    const u=best?urls(best):null;
-    const existing=best?`<div class="existing-doc-label">Versión que ya tenemos</div><div class="existing-doc-card truthful"><div class="doc-list-main"><span class="real-file-mark">${mark(best)}</span><span><b>${esc(best.name)}</b><small>${esc(label(best))}</small></span></div>${u?`<div class="doc-list-actions"><a href="${esc(u.view)}" target="_blank" rel="noopener">Visualizar</a><a href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div>`:'<span class="doc-list-action">Ver</span>'}</div>`:`<div class="empty compact-empty"><b>Todavía no lo tenemos</b><span>No hay un documento equivalente guardado.</span></div>`;
+    const existing=best?`<div class="existing-doc-label">Versión que ya tenemos</div><div class="existing-doc-card truthful"><div class="doc-list-main"><span class="real-file-mark">${mark(best)}</span><span><b>${esc(best.name)}</b><small>${esc(label(best))}</small></span></div>${actionButtons(best)}</div>`:`<div class="empty compact-empty"><b>Todavía no lo tenemos</b><span>No hay un documento equivalente guardado.</span></div>`;
     openModal(`<h2>${esc(q.label)}</h2>${existing}<button class="button primary full" id="upload-new-version">${best?'Subir versión nueva':'Subir archivo'}</button>`);
     document.querySelector('#upload-new-version').onclick=()=>{document.querySelector('#modal').close();document.querySelector('#file-input').click()};
+    bindViewerButtons();
   };
 
+  function bindViewerButtons(){document.querySelectorAll('[data-view-doc]').forEach(el=>{el.onclick=e=>{e.preventDefault();e.stopPropagation();const d=state.documents.find(x=>x.id===el.dataset.viewDoc);if(d)openViewer(d)}})}
   const priorBind=bind;
-  bind=function(){priorBind();};
+  bind=function(){priorBind();bindViewerButtons();};
   render();
 })();
