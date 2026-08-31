@@ -1,86 +1,59 @@
 (() => {
-  const KEY='joseluis-cv-builder-v1';
-  const empty=()=>({basics:{name:'',label:'',email:'',phone:'',url:'',summary:'',location:{address:''}},work:[],education:[],skills:[],languages:[]});
+  const KEY='joseluis-cv-builder-v2';
+  const base=()=>({
+    basics:{name:'Joseluis Moraga',label:'Sociólogo',email:'',phone:'',url:'',summary:'Sociólogo con interés en sociología política, sociología histórica, investigación social y políticas públicas.',location:{address:''},photo:''},
+    work:[],
+    education:[
+      {institution:'Universidad de La Frontera',studyType:'Sociología',area:'Temuco, Chile',date:'2019 - revisar año de egreso'},
+      {institution:'Sciences Po Rennes',studyType:'Semestre de estudios',area:'Rennes, Francia',date:'2022'},
+      {institution:'Colegio Santa Cruz',studyType:'Enseñanza media',area:'Temuco, Chile',date:'2016'}
+    ],
+    volunteer:[
+      {position:'Participación',name:'Protectora de Canes y Felinos, Universidad de La Frontera',date:'2019 - 2021',summary:''},
+      {position:'Participación',name:'Academia Aukamapu de Cine y Medios',date:'2015',summary:''}
+    ],
+    skills:[{name:'Áreas',keywords:['Sociología','Política','Historia','Comunicación oral y escrita']},{name:'Herramientas',keywords:['Excel','Word','SPSS']}],
+    languages:[{language:'Español',fluency:'Nativo'},{language:'Inglés',fluency:'Revisar nivel actual'},{language:'Francés',fluency:'Revisar nivel actual'}],
+    interestsText:'Política, Cine, Animales, Música'
+  });
   let resume=load();
+  function load(){try{return JSON.parse(localStorage.getItem(KEY))||base()}catch{return base()}}
+  function save(){localStorage.setItem(KEY,JSON.stringify(resume));const e=document.querySelector('#saved-state');if(e)e.textContent='Guardado localmente'}
+  const get=(o,p)=>p.split('.').reduce((a,k)=>a?.[k],o)??'';
+  const set=(o,p,v)=>{const ks=p.split('.');let c=o;ks.slice(0,-1).forEach(k=>c=c[k]??={});c[ks.at(-1)]=v};
+  const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tex=s=>String(s??'').replace(/\\/g,'\\textbackslash{}').replace(/([#$%&_{}])/g,'\\$1').replace(/\^/g,'\\textasciicircum{}').replace(/~/g,'\\textasciitilde{}');
 
-  function load(){try{return {...empty(),...JSON.parse(localStorage.getItem(KEY)||'null')}}catch{return empty()}}
-  function save(){localStorage.setItem(KEY,JSON.stringify(resume));const el=document.querySelector('#saved-state');if(el){el.textContent='Guardado localmente';clearTimeout(save.t);save.t=setTimeout(()=>el.textContent='Guardado',900)}}
-  function get(obj,path){return path.split('.').reduce((a,k)=>a?.[k],obj)??''}
-  function set(obj,path,value){const keys=path.split('.');let cur=obj;keys.slice(0,-1).forEach(k=>cur=cur[k]??=( {} ));cur[keys.at(-1)]=value}
-  function h(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-  document.querySelectorAll('[data-field]').forEach(el=>{el.value=get(resume,el.dataset.field);el.addEventListener('input',()=>{set(resume,el.dataset.field,el.value);save();renderPreview()})});
-
-  const configs={
-    work:{container:'#work-list',template:'#work-template',blank:{position:'',name:'',startDate:'',endDate:'',summary:''}},
-    education:{container:'#education-list',template:'#education-template',blank:{institution:'',studyType:'',area:'',date:''}},
-    skills:{container:'#skills-list',template:'#skills-template',blank:{name:'',keywords:[]}},
-    languages:{container:'#languages-list',template:'#languages-template',blank:{language:'',fluency:''}}
+  function bindFields(){document.querySelectorAll('[data-field]').forEach(el=>{el.value=get(resume,el.dataset.field);el.oninput=()=>{set(resume,el.dataset.field,el.value);save();renderPreview()}})}
+  const cfg={
+    work:{c:'#work-list',t:'#work-template',b:{position:'',name:'',startDate:'',endDate:'',summary:''}},
+    education:{c:'#education-list',t:'#education-template',b:{institution:'',studyType:'',area:'',date:''}},
+    volunteer:{c:'#volunteer-list',t:'#volunteer-template',b:{position:'',name:'',date:'',summary:''}},
+    skills:{c:'#skills-list',t:'#skills-template',b:{name:'',keywords:[]}},
+    languages:{c:'#languages-list',t:'#languages-template',b:{language:'',fluency:''}}
   };
+  function renderList(type){const x=cfg[type],host=document.querySelector(x.c);host.innerHTML='';(resume[type]||[]).forEach((it,i)=>{const f=document.querySelector(x.t).content.cloneNode(true),r=f.querySelector('[data-entry]');r.querySelectorAll('[data-key]').forEach(el=>{const k=el.dataset.key;el.value=Array.isArray(it[k])?it[k].join(', '):(it[k]||'');el.oninput=()=>{resume[type][i][k]=k==='keywords'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;save();renderPreview()}});r.querySelector('[data-remove]').onclick=()=>{resume[type].splice(i,1);save();renderList(type);renderPreview()};host.append(f)})}
+  Object.keys(cfg).forEach(renderList);
+  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{resume[b.dataset.add].push(structuredClone(cfg[b.dataset.add].b));save();renderList(b.dataset.add);renderPreview()});
+  bindFields();
 
-  function renderList(type){const cfg=configs[type],host=document.querySelector(cfg.container);host.innerHTML='';(resume[type]||[]).forEach((item,index)=>{const frag=document.querySelector(cfg.template).content.cloneNode(true);const root=frag.querySelector('[data-entry]');root.querySelectorAll('[data-key]').forEach(el=>{const key=el.dataset.key;el.value=Array.isArray(item[key])?item[key].join(', '):(item[key]||'');el.addEventListener('input',()=>{resume[type][index][key]=key==='keywords'?el.value.split(',').map(x=>x.trim()).filter(Boolean):el.value;save();renderPreview()})});root.querySelector('[data-remove]').onclick=()=>{resume[type].splice(index,1);save();renderList(type);renderPreview()};host.append(frag)})}
-  Object.keys(configs).forEach(renderList);
-  document.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=()=>{const type=btn.dataset.add;resume[type].push(structuredClone(configs[type].blank));save();renderList(type);renderPreview()});
-
-  const template=document.querySelector('#template');
-  template.value=localStorage.getItem(KEY+'-template')||'classic';
-  template.onchange=()=>{localStorage.setItem(KEY+'-template',template.value);renderPreview()};
+  const tpl=document.querySelector('#template');tpl.value=localStorage.getItem(KEY+'-template')||'legacy';tpl.onchange=()=>{localStorage.setItem(KEY+'-template',tpl.value);renderPreview()};
+  document.querySelector('#photo-input').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{resume.basics.photo=r.result;save();renderPreview()};r.readAsDataURL(f)};
+  document.querySelector('#import-private').onchange=e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.cv)resume={...base(),...d.cv,basics:{...base().basics,...(d.cv.basics||{}),location:{...base().basics.location,...(d.cv.basics?.location||{})}}};else resume={...base(),...d};save();location.reload()}catch{alert('Archivo de importación no válido')}};r.readAsText(f)};
 
   function item(title,sub,date,summary){return `<div class="item"><div class="item-head"><strong>${h(title)}</strong><span class="meta">${h(date)}</span></div>${sub?`<div class="meta">${h(sub)}</div>`:''}${summary?`<p>${h(summary)}</p>`:''}</div>`}
-  function section(title,body){return body?`<section><h2>${h(title)}</h2>${body}</section>`:''}
-  function renderPreview(){
-    const b=resume.basics||{},contact=[b.email,b.phone,b.location?.address,b.url].filter(Boolean).join(' · ');
+  const section=(t,b)=>b?`<section><h2>${h(t)}</h2>${b}</section>`:'';
+  function renderPreview(){const b=resume.basics||{},contact=[b.email,b.phone,b.location?.address,b.url].filter(Boolean).join(' · '),photo=b.photo?`<img class="cv-photo" src="${b.photo}" alt="">`:'';
     const work=(resume.work||[]).filter(x=>Object.values(x).some(Boolean)).map(x=>item(x.position,x.name,[x.startDate,x.endDate].filter(Boolean).join(' - '),x.summary)).join('');
     const edu=(resume.education||[]).filter(x=>Object.values(x).some(Boolean)).map(x=>item(x.studyType,[x.institution,x.area].filter(Boolean).join(' · '),x.date,'')).join('');
-    const skills=(resume.skills||[]).filter(x=>x.name||x.keywords?.length).map(x=>`<div class="skill-line"><strong>${h(x.name)}</strong>${x.name&&x.keywords?.length?': ':''}${h((x.keywords||[]).join(', '))}</div>`).join('');
-    const langs=(resume.languages||[]).filter(x=>x.language||x.fluency).map(x=>`<div class="skill-line"><strong>${h(x.language)}</strong>${x.fluency?`: ${h(x.fluency)}`:''}</div>`).join('');
-    const preview=document.querySelector('#preview');preview.className='resume '+template.value;
-    preview.innerHTML=`<header><h1>${h(b.name||'Tu nombre')}</h1>${b.label?`<div class="headline">${h(b.label)}</div>`:''}${contact?`<div class="contact">${h(contact)}</div>`:''}</header>${b.summary?section('Perfil',`<p>${h(b.summary)}</p>`):''}${section('Experiencia',work)}${section('Educación',edu)}${section('Habilidades',skills)}${section('Idiomas',langs)}`;
-  }
-
-  function cleanJSON(){return {basics:{...resume.basics,location:{address:resume.basics?.location?.address||''}},work:resume.work||[],education:resume.education||[],skills:(resume.skills||[]).map(x=>({...x,keywords:Array.isArray(x.keywords)?x.keywords:[]})),languages:resume.languages||[]}}
-  function dl(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-  document.querySelector('#download-json').onclick=()=>dl('resume.json',JSON.stringify(cleanJSON(),null,2),'application/json');
-  document.querySelector('#download-tex').onclick=()=>dl('CV.tex',latex());
-  document.querySelector('#download-cls').onclick=()=>dl('resume.cls',resumeClass());
-  document.querySelector('#print-pdf').onclick=()=>window.print();
-  document.querySelector('#clear-data').onclick=()=>{if(!confirm('¿Borrar todos los datos guardados por el creador de CV en este navegador?'))return;resume=empty();localStorage.removeItem(KEY);location.reload()};
-
-  function tex(s=''){return String(s).replace(/\\/g,'\\textbackslash{}').replace(/([#$%&_{}])/g,'\\$1').replace(/\^/g,'\\textasciicircum{}').replace(/~/g,'\\textasciitilde{}')}
-  function latex(){
-    const b=resume.basics||{},opt=template.value==='classic'?'':`[${template.value}]`,lines=[];
-    lines.push(`\\documentclass${opt}{resume}`,'\\begin{document}',`\\cvname{${tex(b.name)}}`,`\\cvheadline{${tex(b.label)}}`,`\\cvcontact{${tex([b.email,b.phone,b.location?.address,b.url].filter(Boolean).join(' · '))}}`);
-    if(b.summary)lines.push('\\cvsection{Perfil}',tex(b.summary),'');
-    if(resume.work?.length){lines.push('\\cvsection{Experiencia}');resume.work.forEach(x=>{if(!Object.values(x).some(Boolean))return;lines.push(`\\cventry{${tex(x.position)}}{${tex(x.name)}}{${tex([x.startDate,x.endDate].filter(Boolean).join(' - '))}}`,tex(x.summary),'')})}
-    if(resume.education?.length){lines.push('\\cvsection{Educación}');resume.education.forEach(x=>{if(!Object.values(x).some(Boolean))return;lines.push(`\\cventry{${tex(x.studyType)}}{${tex([x.institution,x.area].filter(Boolean).join(' · '))}}{${tex(x.date)}}`,'')})}
-    if(resume.skills?.some(x=>x.name||x.keywords?.length)){lines.push('\\cvsection{Habilidades}');resume.skills.forEach(x=>{if(x.name||x.keywords?.length)lines.push(`\\cvline{${tex(x.name)}}{${tex((x.keywords||[]).join(', '))}}`)});lines.push('')}
-    if(resume.languages?.some(x=>x.language||x.fluency)){lines.push('\\cvsection{Idiomas}');resume.languages.forEach(x=>{if(x.language||x.fluency)lines.push(`\\cvline{${tex(x.language)}}{${tex(x.fluency)}}`)});lines.push('')}
-    lines.push('\\end{document}');return lines.join('\n')
-  }
-
-  function resumeClass(){return String.raw`\NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{resume}[2026/08/31 Simple CV class]
-\LoadClass[10pt,a4paper]{article}
-\RequirePackage[margin=1.6cm]{geometry}
-\RequirePackage{enumitem}
-\RequirePackage[hidelinks]{hyperref}
-\RequirePackage[T1]{fontenc}
-\RequirePackage[utf8]{inputenc}
-\pagestyle{empty}
-\setlength{\parindent}{0pt}
-\newif\ifcompact
-\newif\ifacademic
-\DeclareOption{compact}{\compacttrue}
-\DeclareOption{academic}{\academictrue}
-\ProcessOptions\relax
-\ifcompact\geometry{margin=1.25cm}\fi
-\newcommand{\cvname}[1]{{\LARGE\bfseries #1}\par}
-\newcommand{\cvheadline}[1]{{\normalsize #1}\par}
-\newcommand{\cvcontact}[1]{{\small #1}\par\vspace{0.6em}}
-\newcommand{\cvsection}[1]{\vspace{0.8em}{\bfseries\ifacademic\large\else\normalsize\MakeUppercase\fi #1}\par\hrule\vspace{0.45em}}
-\newcommand{\cventry}[3]{\textbf{#1}\hfill {\small #3}\par{\small #2}\par}
-\newcommand{\cvline}[2]{\textbf{#1}: #2\par}
-`}
-
+    const vol=(resume.volunteer||[]).filter(x=>Object.values(x).some(Boolean)).map(x=>item(x.position,x.name,x.date,x.summary)).join('');
+    const sk=(resume.skills||[]).map(x=>`<div class="skill-line"><strong>${h(x.name)}</strong>${x.keywords?.length?`: ${h(x.keywords.join(', '))}`:''}</div>`).join('');
+    const la=(resume.languages||[]).map(x=>`<div class="skill-line"><strong>${h(x.language)}</strong>${x.fluency?`: ${h(x.fluency)}`:''}</div>`).join('');
+    const p=document.querySelector('#preview');p.className='resume '+tpl.value;p.innerHTML=`<header>${photo}<div><h1>${h(b.name)}</h1><div class="headline">${h(b.label)}</div>${contact?`<div class="contact">${h(contact)}</div>`:''}</div></header>${section('Perfil',`<p>${h(b.summary)}</p>`)}${section('Experiencia',work)}${section('Educación',edu)}${section('Actividades',vol)}${section('Habilidades',sk)}${section('Idiomas',la)}${resume.interestsText?section('Intereses',`<p>${h(resume.interestsText)}</p>`):''}`}
+  function clean(){return {...resume,interests:(resume.interestsText||'').split(',').map(x=>({name:x.trim()})).filter(x=>x.name)}}
+  const dl=(n,t,m='text/plain')=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
+  document.querySelector('#download-json').onclick=()=>dl('resume.json',JSON.stringify(clean(),null,2),'application/json');document.querySelector('#download-tex').onclick=()=>dl('CV.tex',latex());document.querySelector('#download-cls').onclick=()=>dl('resume.cls',resumeClass());document.querySelector('#print-pdf').onclick=()=>window.print();document.querySelector('#clear-data').onclick=()=>{if(confirm('¿Borrar los datos locales del CV?')){localStorage.removeItem(KEY);location.reload()}};
+  function latex(){const b=resume.basics,l=[];l.push('\\documentclass{resume}','\\begin{document}',`\\cvname{${tex(b.name)}}`,`\\cvheadline{${tex(b.label)}}`,`\\cvcontact{${tex([b.email,b.phone,b.location?.address,b.url].filter(Boolean).join(' · '))}}`);if(b.summary)l.push('\\cvsection{Perfil}',tex(b.summary),'');for(const [key,title] of [['work','Experiencia'],['education','Educación'],['volunteer','Actividades']]){if(resume[key]?.length){l.push(`\\cvsection{${title}}`);resume[key].forEach(x=>{const a=x.position||x.studyType||'',sub=x.name||[x.institution,x.area].filter(Boolean).join(' · '),d=x.date||[x.startDate,x.endDate].filter(Boolean).join(' - ');l.push(`\\cventry{${tex(a)}}{${tex(sub)}}{${tex(d)}}`,tex(x.summary||''),'')})}}if(resume.skills?.length){l.push('\\cvsection{Habilidades}');resume.skills.forEach(x=>l.push(`\\cvline{${tex(x.name)}}{${tex((x.keywords||[]).join(', '))}}`))}if(resume.languages?.length){l.push('\\cvsection{Idiomas}');resume.languages.forEach(x=>l.push(`\\cvline{${tex(x.language)}}{${tex(x.fluency)}}`))}if(resume.interestsText)l.push('\\cvsection{Intereses}',tex(resume.interestsText));l.push('\\end{document}');return l.join('\n')}
+  function resumeClass(){return String.raw`\NeedsTeXFormat{LaTeX2e}\ProvidesClass{resume}[2026 CV]\LoadClass[10pt,a4paper]{article}\RequirePackage[margin=1.5cm]{geometry}\RequirePackage[hidelinks]{hyperref}\RequirePackage[T1]{fontenc}\RequirePackage[utf8]{inputenc}\pagestyle{empty}\setlength{\parindent}{0pt}\newcommand{\cvname}[1]{{\LARGE\bfseries #1}\par}\newcommand{\cvheadline}[1]{{\normalsize #1}\par}\newcommand{\cvcontact}[1]{{\small #1}\par\vspace{.6em}}\newcommand{\cvsection}[1]{\vspace{.8em}{\bfseries\MakeUppercase{#1}}\par\hrule\vspace{.45em}}\newcommand{\cventry}[3]{\textbf{#1}\hfill{\small #3}\par{\small #2}\par}\newcommand{\cvline}[2]{\textbf{#1}: #2\par}`}
   renderPreview();
 })();
