@@ -13,8 +13,13 @@
   };
   const enc=p=>p.split('/').map(encodeURIComponent).join('/');
   const urls=d=>{const p=paths[d?.id];return p?{view:VIEW+enc(p),download:RAW+enc(p),path:p}:null};
-  const label=d=>d?.status==='located'?`${d.sourceYear||'Histórico'}${d.needsUpdate?' · actualizar':''}`:(d?.sourceYear||'Pendiente');
-  const mark=d=>{const n=(d?.name||'').toLowerCase();return n.endsWith('.pdf')?'PDF':(n.endsWith('.doc')||n.endsWith('.docx'))?'DOC':d?.category==='CV'?'CV':'DOC'};
+  const isSupabase=d=>!!(d?.storagePath||d?.storageProvider==='supabase');
+  const label=d=>{
+    if(d?.status==='ready') return 'Listo';
+    if(d?.status==='located') return `${d.sourceYear||'Histórico'}${d.needsUpdate?' · actualizar':''}`;
+    return d?.sourceYear?String(d.sourceYear):'Pendiente';
+  };
+  const mark=d=>{const n=(d?.name||'').toLowerCase();return n.endsWith('.pdf')?'PDF':(n.endsWith('.doc')||n.endsWith('.docx'))?'DOC':/\.(png|jpe?g|webp)$/i.test(n)?'IMG':d?.category==='CV'?'CV':'DOC'};
   const isPdf=d=>/\.pdf$/i.test(urls(d)?.path||d?.name||'');
   const matches=(d,q)=>{
     const n=(d.name||'').toLowerCase(),id=(q.id||'').toLowerCase(),l=(q.label||'').toLowerCase();
@@ -28,6 +33,7 @@
   };
 
   function openViewer(d){
+    if(isSupabase(d)&&window.postulaDocuments?.visualize){window.postulaDocuments.visualize(d).catch(console.error);return;}
     const u=urls(d);if(!u)return;
     const modal=document.querySelector('#modal');
     modal.classList.add('viewer-modal');
@@ -40,14 +46,23 @@
       frame.innerHTML=`<object data="${esc(objectUrl)}" type="application/pdf"><div class="viewer-empty"><b>No se pudo incrustar el PDF</b><span>Usa Descargar para abrir el original.</span></div></object>`;
       modal.addEventListener('close',()=>URL.revokeObjectURL(objectUrl),{once:true});
     }).catch(()=>{
-      const frame=document.querySelector('#viewer-frame');if(frame)frame.innerHTML='<div class="viewer-empty"><b>El PDF privado necesita autenticación</b><span>El visor ya está preparado, pero GitHub no entrega este archivo privado a una página pública. Cuando añadamos el login de Postula, se cargará aquí directamente.</span></div>';
+      const frame=document.querySelector('#viewer-frame');if(frame)frame.innerHTML='<div class="viewer-empty"><b>El PDF privado necesita autenticación</b><span>Este documento histórico todavía está servido desde el repositorio privado antiguo.</span></div>';
     });
+  }
+
+  function downloadDoc(d){
+    if(isSupabase(d)&&window.postulaDocuments?.download){window.postulaDocuments.download(d).catch(console.error);return;}
+    const u=urls(d);if(u)window.open(u.download,'_blank','noopener');
   }
 
   function closeViewerClass(){document.querySelector('#modal')?.classList.remove('viewer-modal')}
   document.querySelector('#modal')?.addEventListener('close',closeViewerClass);
 
-  const actionButtons=d=>{const u=urls(d);if(!u)return '<span class="doc-list-action">Ver</span>';return `<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><a href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div>`};
+  const actionButtons=d=>{
+    if(isSupabase(d))return `<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><button type="button" data-download-doc="${esc(d.id)}">Descargar</button></div>`;
+    const u=urls(d);if(!u)return '<span class="doc-list-action">Ver</span>';
+    return `<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><a href="${esc(u.download)}" target="_blank" rel="noopener">Descargar</a></div>`;
+  };
 
   docsPage=function(){
     const cats=['CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'];
@@ -71,7 +86,10 @@
     bindViewerButtons();
   };
 
-  function bindViewerButtons(){document.querySelectorAll('[data-view-doc]').forEach(el=>{el.onclick=e=>{e.preventDefault();e.stopPropagation();const d=state.documents.find(x=>x.id===el.dataset.viewDoc);if(d)openViewer(d)}})}
+  function bindViewerButtons(){
+    document.querySelectorAll('[data-view-doc]').forEach(el=>{el.onclick=e=>{e.preventDefault();e.stopPropagation();const d=state.documents.find(x=>x.id===el.dataset.viewDoc);if(d)openViewer(d)}});
+    document.querySelectorAll('[data-download-doc]').forEach(el=>{el.onclick=e=>{e.preventDefault();e.stopPropagation();const d=state.documents.find(x=>x.id===el.dataset.downloadDoc);if(d)downloadDoc(d)}});
+  }
   const priorBind=bind;
   bind=function(){priorBind();bindViewerButtons();};
   render();
