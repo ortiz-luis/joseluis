@@ -12,6 +12,15 @@
   const clean=s=>String(s||'file').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/^-+|-+$/g,'');
   const encPath=p=>p.split('/').map(encodeURIComponent).join('/');
   const storageUrl=p=>`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${encPath(p)}`;
+  const normalizedName=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+
+  function inferCategory(name){
+    const n=normalizedName(name);
+    if(/(^|[^a-z])cv([^a-z]|$)|curriculum/.test(n))return 'CV';
+    if(/motiv|lettre/.test(n))return 'Muestras';
+    if(/recomend|recommend/.test(n))return 'Recomendaciones';
+    return 'Otros';
+  }
 
   async function currentUser(){
     const t=token(); if(!t)return null;
@@ -46,12 +55,20 @@
 
   async function uploadFile(file){
     const user=await currentUser();if(!user?.id)throw new Error('Sesión no disponible');
-    const category=(typeof docFilter!=='undefined'&&docFilter&&docFilter!=='all')?docFilter:'Otros';
+    const selectedCategory=(typeof docFilter!=='undefined'&&docFilter&&docFilter!=='all')?docFilter:null;
+    const category=selectedCategory||inferCategory(file.name);
     const path=`${user.id}/${Date.now()}-${clean(file.name)}`;
     const up=await fetch(storageUrl(path),{method:'POST',headers:headers({'Content-Type':file.type||'application/octet-stream','x-upsert':'true'}),body:file});
     if(!up.ok)throw new Error(await up.text()||`Storage ${up.status}`);
-    const inserted=await dbRequest('documents',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:user.id,name:file.name,category,storage_path:path,mime_type:file.type||null,size_bytes:file.size,status:'ready'})});
-    await loadDocuments();return Array.isArray(inserted)?inserted[0]:inserted;
+
+    const existing=await dbRequest(`documents?select=id,storage_path&name=eq.${encodeURIComponent(file.name)}&limit=1`);
+    let saved;
+    if(Array.isArray(existing)&&existing.length){
+      saved=await dbRequest(`documents?id=eq.${existing[0].id}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({category,storage_path:path,mime_type:file.type||null,size_bytes:file.size,status:'ready',updated_at:new Date().toISOString()})});
+    }else{
+      saved=await dbRequest('documents',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:user.id,name:file.name,category,storage_path:path,mime_type:file.type||null,size_bytes:file.size,status:'ready'})});
+    }
+    await loadDocuments();return Array.isArray(saved)?saved[0]:saved;
   }
 
   async function fetchBlob(doc){
