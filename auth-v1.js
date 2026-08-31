@@ -1,6 +1,7 @@
 (() => {
   const SUPABASE_URL='https://qqzrpzjtvrbtkbhmdjmp.supabase.co';
   const SUPABASE_KEY='sb_publishable_-1TjOOzBlXwxaXuyOotQAg_c33AjzCN';
+  const APP_URL='https://ortiz-luis.github.io/joseluis/';
   const SESSION_KEY='postula-supabase-session-v1';
 
   const apiHeaders=()=>({'apikey':SUPABASE_KEY,'Content-Type':'application/json'});
@@ -45,7 +46,9 @@
     const s=await authFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
     saveSession(s);return s;
   }
-  async function signUp(email,password){return authFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});}
+  async function signUp(email,password){
+    return authFetch('/auth/v1/signup?redirect_to='+encodeURIComponent(APP_URL),{method:'POST',body:JSON.stringify({email,password})});
+  }
 
   function unlock(session){
     document.documentElement.classList.add('postula-authenticated');
@@ -53,6 +56,7 @@
     window.postulaAuth={
       supabaseUrl:SUPABASE_URL,
       publishableKey:SUPABASE_KEY,
+      appUrl:APP_URL,
       getSession:()=>readSession(),
       getAccessToken:()=>readSession()?.access_token||null,
       signOut:async()=>{
