@@ -17,12 +17,21 @@
     ? `<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><button type="button" data-download-doc="${esc(d.id)}">Descargar</button></div>`
     : '<span class="doc-list-action">No disponible</span>';
 
+  const nestedDocument=d=>`<div class="doc-item" style="margin:8px 0 10px 28px;width:calc(100% - 28px);box-sizing:border-box"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>${esc(label(d))}</span></div></div>${actionButtons(d)}</div>`;
+
   docsPage=function(){
     const cats=['Identidad','CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'];
     const usable=state.documents.filter(isUsable);
     const counts=Object.fromEntries(cats.map(c=>[c,usable.filter(d=>d.category===c).length]));
-    const docs=docFilter==='all'?[]:usable.filter(d=>d.category===docFilter);
-    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload">+</button></div><div class="wallet-list">${cats.map(c=>`<button class="wallet-row ${docFilter===c?'active':''}" data-docfilter="${c}"><span>${icon(c)}</span><strong>${c}</strong><b>${counts[c]||0}</b><i>›</i></button>`).join('')}</div>${docFilter!=='all'?`<div class="doc-items">${docs.map(d=>`<div class="doc-item"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>${esc(label(d))}</span></div></div>${actionButtons(d)}</div>`).join('')||'<div class="empty">Sin documentos utilizables en 2026</div>'}</div>`:''}</section>`;
+    const rows=cats.map(c=>{
+      const open=docFilter===c;
+      const docs=usable.filter(d=>d.category===c);
+      const children=open
+        ? (docs.length?docs.map(nestedDocument).join(''):'<div class="empty" style="margin:8px 0 10px 28px;width:calc(100% - 28px);box-sizing:border-box">Sin documentos utilizables en 2026</div>')
+        : '';
+      return `<div class="document-category-group"><button class="wallet-row ${open?'active':''}" data-docfilter="${c}"><span>${icon(c)}</span><strong>${c}</strong><b>${counts[c]||0}</b><i>${open?'⌄':'›'}</i></button>${children}</div>`;
+    }).join('');
+    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload">+</button></div><div class="wallet-list">${rows}</div></section>`;
   };
 
   openReq=function(id,rid){
