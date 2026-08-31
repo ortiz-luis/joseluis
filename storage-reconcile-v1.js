@@ -19,7 +19,7 @@
     const r=await fetch(`${SUPABASE_URL}/storage/v1/object/list/${BUCKET}`,{
       method:'POST',
       headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
-      body:JSON.stringify({prefix:`${uid}/`,limit:1000,offset:0,sortBy:{column:'created_at',order:'desc'}})
+      body:JSON.stringify({prefix:uid,limit:1000,offset:0,sortBy:{column:'created_at',order:'desc'}})
     });
     if(!r.ok)return [];
     const rows=await r.json();
