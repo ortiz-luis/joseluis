@@ -67,8 +67,8 @@
 - [x] Static-file smoke checks.
 - [x] CI checks the v2 low-attention contract.
 - [x] CI explicitly guards against reintroducing `Actividad reciente` and old explanatory Home copy.
-- [ ] Confirm latest CI run is green after final v2 commit.
-- [ ] Confirm latest GitHub Pages deployment is green after final v2 commit.
+- [x] Latest CI run is green after final v2 commit.
+- [x] Latest GitHub Pages deployment is green after final v2 commit.
 - [ ] Human visual check on desktop.
 - [ ] Human visual check on mobile.
 
