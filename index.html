@@ -2,31 +2,27 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#f6faf7" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f5f8f6" />
+  <meta name="description" content="Procesos y documentos, en orden." />
   <title>Postula</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Navegación principal">
-      <a class="brand" href="#home" aria-label="Postula, inicio"><span class="brand-mark">P</span><span>Postula</span></a>
+      <a class="brand" href="#home"><span class="brand-mark">P</span><span>Postula</span></a>
       <nav id="desktop-nav" class="nav-list"></nav>
-      <div class="sidebar-foot"><button class="quiet-button" data-action="reset-demo">↻ Reiniciar datos locales</button><p>Los datos de esta versión permanecen en este navegador.</p></div>
+      <div class="sidebar-foot"><button class="quiet-button" data-action="reset-demo">↻ Reiniciar</button></div>
     </aside>
-
     <header class="topbar">
-      <button id="mobile-menu" class="icon-button mobile-only" aria-label="Abrir menú">☰</button>
       <a class="mobile-brand mobile-only" href="#home"><span class="brand-mark small">P</span>Postula</a>
-      <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Buscar oportunidades o documentos" aria-label="Buscar" /></div>
+      <div class="search-wrap"><span aria-hidden="true">⌕</span><input id="global-search" type="search" placeholder="Buscar" aria-label="Buscar" /></div>
       <div class="user-chip"><span class="avatar">JL</span><span class="desktop-only">José Luis</span></div>
     </header>
-
     <main id="main" class="main" tabindex="-1"></main>
-
     <nav id="mobile-nav" class="bottom-nav mobile-only" aria-label="Navegación móvil"></nav>
   </div>
-
   <dialog id="modal" class="modal"><div id="modal-content"></div></dialog>
   <input id="file-input" type="file" hidden multiple />
   <script src="app.js"></script>
