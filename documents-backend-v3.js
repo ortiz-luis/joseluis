@@ -7,15 +7,8 @@
   const PDFJS_WORKER=`https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.mjs`;
   let pdfjsPromise=null;
 
-  const historical={
-    'CV_Moraga_Joseluis_ES_v3_2022.pdf':{id:'gmail-cv-es-v3',name:'CV español v3',category:'CV'},
-    'CV_Moraga_Joseluis_FR_v3_2022.pdf':{id:'gmail-cv-fr-v3',name:'CV francés v3',category:'CV'},
-    'Carta_Moraga_Joseluis_ES_v3_2022.pdf':{id:'gmail-motivation-es',name:'Carta de motivación · ES',category:'Muestras'},
-    'Lettre_Moraga_Joseluis_FR_v3_2022.pdf':{id:'gmail-motivation-fr',name:'Lettre de motivation · FR',category:'Muestras'},
-    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte vigente',category:'Identidad'},
-    'Admission_MORAGA_2022.pdf':{id:'gmail-sciencespo-admission',name:'Admisión Sciences Po Rennes',category:'Estudios'},
-    'UFRO_Mobility_Funding_2022.pdf':{id:'gmail-ufro-mobility',name:'Financiamiento movilidad UFRO → Rennes',category:'Estudios'},
-    'Dossier_FSI_MAJ_2021-2022_completo.doc':{id:'gmail-sciencespo-dossier',name:'Dossier Sciences Po Rennes',category:'Estudios'}
+  const currentAliases={
+    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte vigente',category:'Identidad'}
   };
 
   const token=()=>window.postulaAuth?.getAccessToken?.()||null;
@@ -49,28 +42,20 @@
 
   async function loadDocuments(){
     if(!token()||typeof state==='undefined'||!Array.isArray(state.documents))return [];
-    const rows=await dbRequest('documents?select=*&order=created_at.desc');
-    for(const row of rows){
-      const h=historical[row.name];
-      let d=h?state.documents.find(x=>x.id===h.id):state.documents.find(x=>x.backendId===row.id);
-      if(!d)d=state.documents.find(x=>String(x.name||'').trim().toLowerCase()===String(row.name||'').trim().toLowerCase());
-      if(!d){d={id:`db-${row.id}`,name:row.name,category:inferCategory(row.name)};state.documents.push(d);}
-      d.backendId=row.id;
-      d.name=h?.name||row.name;
-      d.category=h?.category||((['Identidad','CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'].includes(row.category))?row.category:inferCategory(row.name));
-      d.status=row.status==='ready'?'ready':row.status;
-      d.fileStored=row.status==='ready';
-      d.storageProvider='supabase';
-      d.storagePath=row.storage_path;
-      d.mimeType=row.mime_type||'';
-      d.sizeBytes=row.size_bytes||null;
-      d.updated=row.updated_at||row.created_at;
-      d.source='Supabase';
-      d.needsUpdate=d.needsUpdate??false;
-      d.objectUrl=`postula-storage:${row.storage_path}`;
-      d.downloadUrl=d.objectUrl;
-      d.previewUrl=d.objectUrl;
-    }
+    const rows=await dbRequest('documents?status=eq.ready&select=*&order=created_at.desc');
+    state.documents=rows.map(row=>{
+      const a=currentAliases[row.name];
+      return {
+        id:a?.id||`db-${row.id}`,
+        backendId:row.id,
+        name:a?.name||row.name,
+        category:a?.category||((['Identidad','CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'].includes(row.category))?row.category:inferCategory(row.name)),
+        status:'ready',fileStored:true,storageProvider:'supabase',storagePath:row.storage_path,
+        mimeType:row.mime_type||'',sizeBytes:row.size_bytes||null,updated:row.updated_at||row.created_at,
+        source:'Supabase',needsUpdate:false,objectUrl:`postula-storage:${row.storage_path}`,
+        downloadUrl:`postula-storage:${row.storage_path}`,previewUrl:`postula-storage:${row.storage_path}`
+      };
+    });
     try{save()}catch{}
     try{render()}catch{}
     return rows;
