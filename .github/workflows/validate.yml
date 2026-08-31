@@ -24,11 +24,18 @@ jobs:
           test -s styles.css
           test -s app.js
           test -s README.md
-      - name: Product contract smoke checks
+      - name: App contract smoke checks
         run: |
-          grep -q 'Todo está al día' app.js
-          grep -q 'Oportunidades' app.js
+          grep -q 'Todo al día' app.js
+          grep -q 'Procesos' app.js
           grep -q 'Documentos' app.js
+          grep -q 'Oportunidades' app.js
           grep -q 'Perfil' app.js
+          grep -q 'Por resolver' app.js
           grep -q 'localStorage' app.js
-          grep -q '@media(max-width:850px)' styles.css
+          grep -q 'metric-card' styles.css
+          grep -q '@media(max-width:820px)' styles.css
+      - name: Low-attention home guardrails
+        run: |
+          ! grep -q 'Actividad reciente' app.js
+          ! grep -q 'No necesitas acordarte de todo' app.js
