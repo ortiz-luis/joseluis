@@ -12,7 +12,7 @@
     'CV_Moraga_Joseluis_FR_v3_2022.pdf':{id:'gmail-cv-fr-v3',name:'CV francés v3',category:'CV'},
     'Carta_Moraga_Joseluis_ES_v3_2022.pdf':{id:'gmail-motivation-es',name:'Carta de motivación · ES',category:'Muestras'},
     'Lettre_Moraga_Joseluis_FR_v3_2022.pdf':{id:'gmail-motivation-fr',name:'Lettre de motivation · FR',category:'Muestras'},
-    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte',category:'Otros'},
+    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte vigente',category:'Identidad'},
     'Admission_MORAGA_2022.pdf':{id:'gmail-sciencespo-admission',name:'Admisión Sciences Po Rennes',category:'Estudios'},
     'UFRO_Mobility_Funding_2022.pdf':{id:'gmail-ufro-mobility',name:'Financiamiento movilidad UFRO → Rennes',category:'Estudios'},
     'Dossier_FSI_MAJ_2021-2022_completo.doc':{id:'gmail-sciencespo-dossier',name:'Dossier Sciences Po Rennes',category:'Estudios'}
@@ -28,6 +28,7 @@
   function inferCategory(name){
     const n=normalizedName(name);
     if(/(^|[^a-z])cv([^a-z]|$)|curriculum/.test(n))return 'CV';
+    if(/pasaport|passport/.test(n))return 'Identidad';
     if(/motiv|lettre/.test(n))return 'Muestras';
     if(/recomend|recommend/.test(n))return 'Recomendaciones';
     return 'Otros';
@@ -56,7 +57,7 @@
       if(!d){d={id:`db-${row.id}`,name:row.name,category:inferCategory(row.name)};state.documents.push(d);}
       d.backendId=row.id;
       d.name=h?.name||row.name;
-      d.category=h?.category||((['CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'].includes(row.category))?row.category:inferCategory(row.name));
+      d.category=h?.category||((['Identidad','CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'].includes(row.category))?row.category:inferCategory(row.name));
       d.status=row.status==='ready'?'ready':row.status;
       d.fileStored=row.status==='ready';
       d.storageProvider='supabase';
@@ -138,8 +139,8 @@
 
   document.addEventListener('change',e=>{const input=e.target;if(!(input instanceof HTMLInputElement)||input.id!=='file-input'||!input.files?.length)return;[...input.files].forEach(file=>uploadFile(file).catch(err=>{console.error('Document upload failed',err);alert('No se pudo guardar el documento: '+err.message)}));},true);
   document.addEventListener('click',e=>{
-    const v=e.target.closest?.('[data-visualize-doc],[data-view-doc]');if(v){const id=v.dataset.visualizeDoc||v.dataset.viewDoc,doc=state?.documents?.find(d=>d.id===id);if(doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();visualize(doc).catch(console.error);return;}}
-    const d=e.target.closest?.('[data-download-doc]');if(d){const doc=state?.documents?.find(x=>x.id===d.dataset.downloadDoc);if(doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();download(doc).catch(console.error);}}
+    const v=e.target.closest?.('[data-visualize-doc],[data-view-doc]');if(v){const id=v.dataset.visualizeDoc||v.dataset.viewDoc,doc=state?.documents?.find(d=>d.id===id);if(doc?.status==='ready'&&doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();visualize(doc).catch(console.error);return;}}
+    const d=e.target.closest?.('[data-download-doc]');if(d){const doc=state?.documents?.find(x=>x.id===d.dataset.downloadDoc);if(doc?.status==='ready'&&doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();download(doc).catch(console.error);}}
   },true);
 
   function boot(){if(token())loadDocuments().catch(console.error);else setTimeout(boot,250);}
