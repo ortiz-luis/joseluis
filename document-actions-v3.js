@@ -19,9 +19,10 @@
 
   docsPage=function(){
     const cats=['CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'];
-    const counts=Object.fromEntries(cats.map(c=>[c,state.documents.filter(d=>d.category===c).length]));
-    const docs=docFilter==='all'?[]:state.documents.filter(d=>d.category===docFilter);
-    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload">+</button></div><div class="wallet-list">${cats.map(c=>`<button class="wallet-row ${docFilter===c?'active':''}" data-docfilter="${c}"><span>${icon(c)}</span><strong>${c}</strong><b>${counts[c]||0}</b><i>›</i></button>`).join('')}</div>${docFilter!=='all'?`<div class="doc-items">${docs.map(d=>`<div class="doc-item"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>${esc(label(d))}</span></div></div>${actionButtons(d)}</div>`).join('')||'<div class="empty">Sin documentos</div>'}</div>`:''}</section>`;
+    const stored=state.documents.filter(isStored);
+    const counts=Object.fromEntries(cats.map(c=>[c,stored.filter(d=>d.category===c).length]));
+    const docs=docFilter==='all'?[]:stored.filter(d=>d.category===docFilter);
+    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload">+</button></div><div class="wallet-list">${cats.map(c=>`<button class="wallet-row ${docFilter===c?'active':''}" data-docfilter="${c}"><span>${icon(c)}</span><strong>${c}</strong><b>${counts[c]||0}</b><i>›</i></button>`).join('')}</div>${docFilter!=='all'?`<div class="doc-items">${docs.map(d=>`<div class="doc-item"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>${esc(label(d))}</span></div></div>${actionButtons(d)}</div>`).join('')||'<div class="empty">Sin documentos guardados</div>'}</div>`:''}</section>`;
   };
 
   openReq=function(id,rid){
