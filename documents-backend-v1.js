@@ -72,14 +72,15 @@
   }
 
   async function visualize(doc){
-    const blob=await fetchBlob(doc); if(!blob)return false;
+    const rawBlob=await fetchBlob(doc); if(!rawBlob)return false;
+    const isPdf=/pdf/i.test(rawBlob.type)||/\.pdf$/i.test(doc.name||'');
+    const isImage=/^image\//i.test(rawBlob.type)||/\.(png|jpe?g|webp)$/i.test(doc.name||'');
+    const blob=isPdf&&rawBlob.type!=='application/pdf'?new Blob([rawBlob],{type:'application/pdf'}):rawBlob;
     const url=URL.createObjectURL(blob);
     const modal=document.querySelector('#modal');
-    const isPdf=/pdf/i.test(blob.type)||/\.pdf$/i.test(doc.name||'');
-    const isImage=/^image\//i.test(blob.type)||/\.(png|jpe?g|webp)$/i.test(doc.name||'');
     if(typeof openModal!=='function'){window.open(url,'_blank');return true;}
     modal?.classList.add('viewer-modal');
-    const body=isPdf?`<div class="viewer-frame"><object data="${url}" type="application/pdf"><div class="viewer-empty"><b>No se pudo incrustar el PDF</b><span>Usa Descargar.</span></div></object></div>`:isImage?`<div class="viewer-frame"><img src="${url}" alt="${esc(doc.name)}" style="max-width:100%;max-height:75vh;object-fit:contain"></div>`:`<div class="viewer-frame"><div class="viewer-empty"><b>Vista previa no disponible para este formato</b><span>Puedes descargar el original.</span></div></div>`;
+    const body=isPdf?`<div class="viewer-frame"><iframe src="${url}#toolbar=1&navpanes=0" title="${esc(doc.name)}" style="width:100%;height:100%;border:0;background:white"></iframe></div>`:isImage?`<div class="viewer-frame"><img src="${url}" alt="${esc(doc.name)}" style="max-width:100%;max-height:75vh;object-fit:contain"></div>`:`<div class="viewer-frame"><div class="viewer-empty"><b>Vista previa no disponible para este formato</b><span>Puedes descargar el original.</span></div></div>`;
     openModal(`<div class="viewer-shell"><div class="viewer-toolbar"><strong>${esc(doc.name)}</strong><div class="viewer-actions"><button type="button" class="button soft" id="db-download">Descargar</button></div></div>${body}</div>`);
     const dl=document.querySelector('#db-download');
     if(dl)dl.onclick=()=>download(doc,blob);
