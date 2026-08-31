@@ -17,25 +17,38 @@ jobs:
         with:
           node-version: '22'
       - name: JavaScript syntax
-        run: node --check app.js
+        run: node --check app-v3.js
       - name: Required static files
         run: |
           test -s index.html
           test -s styles.css
-          test -s app.js
+          test -s app-v3.css
+          test -s app-v3.js
           test -s README.md
       - name: App contract smoke checks
         run: |
-          grep -q 'Todo al día' app.js
-          grep -q 'Procesos' app.js
-          grep -q 'Documentos' app.js
-          grep -q 'Oportunidades' app.js
-          grep -q 'Perfil' app.js
-          grep -q 'Por resolver' app.js
-          grep -q 'localStorage' app.js
-          grep -q 'metric-card' styles.css
-          grep -q '@media(max-width:820px)' styles.css
-      - name: Low-attention home guardrails
+          grep -q 'Todo al día' app-v3.js
+          grep -q 'Procesos' app-v3.js
+          grep -q 'Documentos' app-v3.js
+          grep -q 'Oportunidades' app-v3.js
+          grep -q 'Perfil' app-v3.js
+          grep -q 'Por resolver' app-v3.js
+          grep -q 'localStorage' app-v3.js
+          grep -q 'app-cards' app-v3.css
+          grep -q '@media(max-width:850px)' app-v3.css
+      - name: Radar prefill checks
         run: |
-          ! grep -q 'Actividad reciente' app.js
-          ! grep -q 'No necesitas acordarte de todo' app.js
+          grep -q 'gmf-brussels-2026' app-v3.js
+          grep -q 'blue-book-2027' app-v3.js
+          grep -q 'cor-cicero-2027' app-v3.js
+          grep -q 'schuman-2027' app-v3.js
+          grep -q 'eit-2027' app-v3.js
+          grep -q 'unesco-internship-2026' app-v3.js
+          grep -q 'oecd-yap-2027' app-v3.js
+          grep -q 'mundus-mapp-2027' app-v3.js
+          grep -q 'sciencespo-luksic-2027' app-v3.js
+          grep -q 'france-working-holiday' app-v3.js
+      - name: Low-attention guardrails
+        run: |
+          ! grep -q 'Actividad reciente' app-v3.js
+          ! grep -q 'No necesitas acordarte de todo' app-v3.js
