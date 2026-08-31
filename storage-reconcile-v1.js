@@ -13,11 +13,16 @@
     for(const doc of state.documents){
       const byId=map[doc.id];
       const byName=map[`name:${doc.name}`];
-      const meta=byId||byName;
+      const byMetaName=Object.values(map).find(meta=>meta?.name===doc.name);
+      const meta=byId||byName||byMetaName;
       if(!meta?.path)continue;
 
       if(!byId){
         map[doc.id]=meta;
+        changed=true;
+      }
+      if(!map[`name:${doc.name}`]){
+        map[`name:${doc.name}`]=meta;
         changed=true;
       }
       if(doc.fileStored!==true||doc.status!=='ready'||doc.storageProvider!=='supabase'){
