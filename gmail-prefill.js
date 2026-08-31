@@ -11,7 +11,7 @@
   if(!s)return;
 
   s.profile=s.profile||{};
-  s.profile.name=s.profile.name||'José Luis';
+  if(!s.profile.name || s.profile.name==='José Luis') s.profile.name='Joseluis';
   s.profile.country=s.profile.country||'Chile';
   s.profile.field='Sociología · Universidad de La Frontera';
   s.profile.international='Sciences Po Rennes · semestre 2022';
@@ -30,10 +30,10 @@
     profilePage=function(){
       const p=state.profile||{};
       const rows=[
-        ['Formación',p.field||'—'],
-        ['Internacional',p.international||'—'],
-        ['Herramientas',p.tools||'—'],
-        ['Idiomas',p.languages||'—']
+        ['Formación',p.field||''],
+        ['Internacional',p.international||''],
+        ['Herramientas',p.tools||''],
+        ['Idiomas',p.languages||'']
       ];
       return `<section class="page"><div class="page-head compact"><h1>Perfil</h1><button class="circle-action" data-action="edit-profile">✎</button></div><div class="profile-app">${rows.map(([k,v])=>`<div><span>${k}</span><strong>${esc(v)}</strong></div>`).join('')}</div></section>`;
     };
