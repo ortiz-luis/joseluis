@@ -12,7 +12,6 @@
     const urgent = d !== null && d <= 5;
 
     return `<section class="page app-home">
-      <div class="page-head compact"><h1>${esc(state.profile.name || 'José Luis')}</h1></div>
       <div class="app-state ${urgent ? 'urgent' : ''}"><span>${urgent ? '!' : '✓'}</span><strong>${urgent ? `${d} días` : 'Todo al día'}</strong></div>
       <div class="app-cards">
         <a href="#opportunities" class="app-card"><b>${active.length}</b><span>Procesos</span></a>
