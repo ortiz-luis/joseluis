@@ -2,6 +2,10 @@
   const SUPABASE_URL='https://qqzrpzjtvrbtkbhmdjmp.supabase.co';
   const SUPABASE_KEY='sb_publishable_-1TjOOzBlXwxaXuyOotQAg_c33AjzCN';
   const BUCKET='documents';
+  const PDFJS_VERSION='6.3.289';
+  const PDFJS_MODULE=`https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.mjs`;
+  const PDFJS_WORKER=`https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.mjs`;
+  let pdfjsPromise=null;
 
   const token=()=>window.postulaAuth?.getAccessToken?.()||null;
   const headers=(extra={})=>({apikey:SUPABASE_KEY,Authorization:`Bearer ${token()}`,...extra});
@@ -71,20 +75,73 @@
     return r.blob();
   }
 
+  async function loadPdfJs(){
+    if(!pdfjsPromise){
+      pdfjsPromise=import(PDFJS_MODULE).then(pdfjs=>{
+        pdfjs.GlobalWorkerOptions.workerSrc=PDFJS_WORKER;
+        return pdfjs;
+      });
+    }
+    return pdfjsPromise;
+  }
+
+  async function renderPdf(blob,container){
+    const pdfjs=await loadPdfJs();
+    const bytes=new Uint8Array(await blob.arrayBuffer());
+    const pdf=await pdfjs.getDocument({data:bytes}).promise;
+    container.innerHTML='';
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    for(let n=1;n<=pdf.numPages;n++){
+      const page=await pdf.getPage(n);
+      const base=page.getViewport({scale:1});
+      const available=Math.max(320,(container.clientWidth||900)-32);
+      const scale=Math.min(1.7,Math.max(0.7,available/base.width));
+      const viewport=page.getViewport({scale});
+      const wrapper=document.createElement('div');
+      wrapper.className='pdfjs-page';
+      wrapper.style.cssText='margin:0 auto 16px;background:#fff;box-shadow:0 1px 8px rgba(0,0,0,.08);width:max-content;max-width:100%;';
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.floor(viewport.width*dpr);
+      canvas.height=Math.floor(viewport.height*dpr);
+      canvas.style.width=`${viewport.width}px`;
+      canvas.style.height=`${viewport.height}px`;
+      canvas.style.maxWidth='100%';
+      canvas.style.display='block';
+      wrapper.appendChild(canvas);
+      container.appendChild(wrapper);
+      await page.render({canvasContext:canvas.getContext('2d'),viewport,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
+    }
+  }
+
   async function visualize(doc){
     const rawBlob=await fetchBlob(doc); if(!rawBlob)return false;
     const isPdf=/pdf/i.test(rawBlob.type)||/\.pdf$/i.test(doc.name||'');
     const isImage=/^image\//i.test(rawBlob.type)||/\.(png|jpe?g|webp)$/i.test(doc.name||'');
     const blob=isPdf&&rawBlob.type!=='application/pdf'?new Blob([rawBlob],{type:'application/pdf'}):rawBlob;
-    const url=URL.createObjectURL(blob);
     const modal=document.querySelector('#modal');
-    if(typeof openModal!=='function'){window.open(url,'_blank');return true;}
+    if(typeof openModal!=='function'){
+      if(isPdf){
+        const u=URL.createObjectURL(blob);window.open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),30000);return true;
+      }
+      const u=URL.createObjectURL(blob);window.open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),30000);return true;
+    }
     modal?.classList.add('viewer-modal');
-    const body=isPdf?`<div class="viewer-frame"><iframe src="${url}#toolbar=1&navpanes=0" title="${esc(doc.name)}" style="width:100%;height:100%;border:0;background:white"></iframe></div>`:isImage?`<div class="viewer-frame"><img src="${url}" alt="${esc(doc.name)}" style="max-width:100%;max-height:75vh;object-fit:contain"></div>`:`<div class="viewer-frame"><div class="viewer-empty"><b>Vista previa no disponible para este formato</b><span>Puedes descargar el original.</span></div></div>`;
+    const body=isPdf?`<div class="viewer-frame" style="overflow:auto;background:#eef2f0;padding:16px"><div id="pdfjs-viewer" style="width:100%;min-height:100%;"><div class="viewer-empty"><b>Cargando PDF…</b><span>Preparando las páginas.</span></div></div></div>`:isImage?`<div class="viewer-frame"><img id="postula-image-preview" alt="${esc(doc.name)}" style="max-width:100%;max-height:75vh;object-fit:contain"></div>`:`<div class="viewer-frame"><div class="viewer-empty"><b>Vista previa no disponible para este formato</b><span>Puedes descargar el original.</span></div></div>`;
     openModal(`<div class="viewer-shell"><div class="viewer-toolbar"><strong>${esc(doc.name)}</strong><div class="viewer-actions"><button type="button" class="button soft" id="db-download">Descargar</button></div></div>${body}</div>`);
     const dl=document.querySelector('#db-download');
     if(dl)dl.onclick=()=>download(doc,blob);
-    modal?.addEventListener('close',()=>URL.revokeObjectURL(url),{once:true});
+    if(isPdf){
+      const target=document.querySelector('#pdfjs-viewer');
+      try{await renderPdf(blob,target)}catch(err){
+        console.error('PDF.js render failed',err);
+        if(target)target.innerHTML='<div class="viewer-empty"><b>No se pudo renderizar el PDF</b><span>Usa Descargar mientras corregimos el visor.</span></div>';
+      }
+    }else if(isImage){
+      const url=URL.createObjectURL(blob);
+      const img=document.querySelector('#postula-image-preview');
+      if(img)img.src=url;
+      modal?.addEventListener('close',()=>URL.revokeObjectURL(url),{once:true});
+    }
     return true;
   }
 
