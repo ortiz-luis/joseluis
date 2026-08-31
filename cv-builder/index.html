@@ -1,134 +1,19 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#f5f8f6" />
-  <title>Crear CV · Postulaciones Joseluis</title>
-  <link rel="stylesheet" href="styles.css?v=1" />
-</head>
-<body>
-  <header class="top">
-    <a href="../#documents" class="back">‹ Documentos</a>
-    <div>
-      <strong>Crear CV</strong>
-      <span>Sin cuenta · guardado sólo en este navegador</span>
-    </div>
-  </header>
-
-  <main class="builder">
-    <section class="editor">
-      <div class="intro">
-        <h1>Crear CV</h1>
-        <p>Completa sólo lo que quieras mostrar. Los datos no se envían a ningún servidor.</p>
-      </div>
-
-      <details open>
-        <summary>Datos personales</summary>
-        <div class="fields two">
-          <label>Nombre completo<input data-field="basics.name" autocomplete="name"></label>
-          <label>Título profesional<input data-field="basics.label" placeholder="Sociólogo, analista, etc."></label>
-          <label>Email<input data-field="basics.email" type="email" autocomplete="email"></label>
-          <label>Teléfono<input data-field="basics.phone" autocomplete="tel"></label>
-          <label>Ciudad / país<input data-field="basics.location.address"></label>
-          <label>LinkedIn / web<input data-field="basics.url" type="url"></label>
-        </div>
-        <label>Perfil breve<textarea data-field="basics.summary" rows="4" placeholder="3 a 5 líneas sobre perfil, experiencia e intereses."></textarea></label>
-      </details>
-
-      <details open>
-        <summary>Experiencia</summary>
-        <div id="work-list"></div>
-        <button class="add" data-add="work">+ Añadir experiencia</button>
-      </details>
-
-      <details open>
-        <summary>Educación</summary>
-        <div id="education-list"></div>
-        <button class="add" data-add="education">+ Añadir formación</button>
-      </details>
-
-      <details>
-        <summary>Habilidades</summary>
-        <div id="skills-list"></div>
-        <button class="add" data-add="skills">+ Añadir grupo</button>
-      </details>
-
-      <details>
-        <summary>Idiomas</summary>
-        <div id="languages-list"></div>
-        <button class="add" data-add="languages">+ Añadir idioma</button>
-      </details>
-
-      <div class="export-box">
-        <label>Plantilla
-          <select id="template">
-            <option value="classic">Clásica</option>
-            <option value="compact">Compacta</option>
-            <option value="academic">Académica</option>
-          </select>
-        </label>
-        <div class="actions">
-          <button id="download-json">Descargar resume.json</button>
-          <button id="download-tex">Descargar CV.tex</button>
-          <button id="download-cls">Descargar resume.cls</button>
-          <button id="print-pdf" class="primary">Guardar PDF</button>
-        </div>
-        <button id="clear-data" class="text-button">Borrar datos de este navegador</button>
-      </div>
-    </section>
-
-    <aside class="preview-wrap">
-      <div class="preview-head"><span>Vista previa</span><small id="saved-state">Guardado localmente</small></div>
-      <article id="preview" class="resume classic"></article>
-    </aside>
-  </main>
-
-  <template id="work-template">
-    <div class="entry" data-entry>
-      <button class="remove" data-remove aria-label="Eliminar">×</button>
-      <div class="fields two">
-        <label>Puesto<input data-key="position"></label>
-        <label>Organización<input data-key="name"></label>
-        <label>Inicio<input data-key="startDate" placeholder="2024-03"></label>
-        <label>Fin<input data-key="endDate" placeholder="Actualidad"></label>
-      </div>
-      <label>Descripción<textarea data-key="summary" rows="3"></textarea></label>
-    </div>
-  </template>
-
-  <template id="education-template">
-    <div class="entry" data-entry>
-      <button class="remove" data-remove aria-label="Eliminar">×</button>
-      <div class="fields two">
-        <label>Institución<input data-key="institution"></label>
-        <label>Programa / título<input data-key="studyType"></label>
-        <label>Área<input data-key="area"></label>
-        <label>Periodo<input data-key="date" placeholder="2020 - 2025"></label>
-      </div>
-    </div>
-  </template>
-
-  <template id="skills-template">
-    <div class="entry" data-entry>
-      <button class="remove" data-remove aria-label="Eliminar">×</button>
-      <div class="fields two">
-        <label>Grupo<input data-key="name" placeholder="Herramientas"></label>
-        <label>Elementos<input data-key="keywords" placeholder="SPSS, Excel, R"></label>
-      </div>
-    </div>
-  </template>
-
-  <template id="languages-template">
-    <div class="entry" data-entry>
-      <button class="remove" data-remove aria-label="Eliminar">×</button>
-      <div class="fields two">
-        <label>Idioma<input data-key="language"></label>
-        <label>Nivel<input data-key="fluency" placeholder="Nativo, B2, C1..."></label>
-      </div>
-    </div>
-  </template>
-
-  <script src="app.js?v=1"></script>
-</body>
-</html>
+<html lang="es"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#f5f8f6"/><title>Crear CV · Postulaciones Joseluis</title><link rel="stylesheet" href="styles.css?v=2"/></head><body>
+<header class="top"><a href="../#documents" class="back">‹ Documentos</a><div><strong>Crear CV</strong><span>Sin cuenta · guardado sólo en este navegador</span></div></header>
+<main class="builder"><section class="editor"><div class="intro"><h1>Crear CV</h1><p>Hay una base inicial de Joseluis con información no sensible. Revisa y actualiza todo lo que haya cambiado.</p><div class="import-row"><label class="import-button">Importar base privada<input id="import-private" type="file" accept="application/json" hidden></label><span>Foto, contacto y otros datos quedan sólo en este navegador.</span></div></div>
+<details open><summary>Datos personales</summary><div class="fields two"><label>Nombre completo<input data-field="basics.name"></label><label>Título profesional<input data-field="basics.label"></label><label>Email<input data-field="basics.email" type="email"></label><label>Teléfono<input data-field="basics.phone"></label><label>Ciudad / país<input data-field="basics.location.address"></label><label>LinkedIn / web<input data-field="basics.url"></label></div><label>Foto<input id="photo-input" type="file" accept="image/*"></label><label>Perfil breve<textarea data-field="basics.summary" rows="4"></textarea></label></details>
+<details open><summary>Experiencia</summary><div id="work-list"></div><button class="add" data-add="work">+ Añadir experiencia</button></details>
+<details open><summary>Educación</summary><div id="education-list"></div><button class="add" data-add="education">+ Añadir formación</button></details>
+<details><summary>Actividades / voluntariado</summary><div id="volunteer-list"></div><button class="add" data-add="volunteer">+ Añadir actividad</button></details>
+<details><summary>Habilidades</summary><div id="skills-list"></div><button class="add" data-add="skills">+ Añadir grupo</button></details>
+<details><summary>Idiomas</summary><div id="languages-list"></div><button class="add" data-add="languages">+ Añadir idioma</button></details>
+<details><summary>Intereses</summary><label>Intereses separados por comas<input data-field="interestsText" placeholder="Política, cine, música..."></label></details>
+<div class="export-box"><label>Plantilla<select id="template"><option value="classic">Clásica</option><option value="compact">Compacta</option><option value="academic">Académica</option><option value="legacy">Original 2022</option></select></label><div class="actions"><button id="download-json">Descargar resume.json</button><button id="download-tex">Descargar CV.tex</button><button id="download-cls">Descargar resume.cls</button><button id="print-pdf" class="primary">Guardar PDF</button></div><button id="clear-data" class="text-button">Borrar datos de este navegador</button></div></section>
+<aside class="preview-wrap"><div class="preview-head"><span>Vista previa</span><small id="saved-state">Guardado localmente</small></div><article id="preview" class="resume classic"></article></aside></main>
+<template id="work-template"><div class="entry" data-entry><button class="remove" data-remove>×</button><div class="fields two"><label>Puesto<input data-key="position"></label><label>Organización<input data-key="name"></label><label>Inicio<input data-key="startDate"></label><label>Fin<input data-key="endDate"></label></div><label>Descripción<textarea data-key="summary" rows="3"></textarea></label></div></template>
+<template id="education-template"><div class="entry" data-entry><button class="remove" data-remove>×</button><div class="fields two"><label>Institución<input data-key="institution"></label><label>Programa / título<input data-key="studyType"></label><label>Área<input data-key="area"></label><label>Periodo<input data-key="date"></label></div></div></template>
+<template id="volunteer-template"><div class="entry" data-entry><button class="remove" data-remove>×</button><div class="fields two"><label>Actividad<input data-key="position"></label><label>Organización<input data-key="name"></label><label>Periodo<input data-key="date"></label></div><label>Descripción<textarea data-key="summary" rows="2"></textarea></label></div></template>
+<template id="skills-template"><div class="entry" data-entry><button class="remove" data-remove>×</button><div class="fields two"><label>Grupo<input data-key="name"></label><label>Elementos<input data-key="keywords"></label></div></div></template>
+<template id="languages-template"><div class="entry" data-entry><button class="remove" data-remove>×</button><div class="fields two"><label>Idioma<input data-key="language"></label><label>Nivel<input data-key="fluency"></label></div></div></template>
+<script src="app.js?v=2"></script></body></html>
