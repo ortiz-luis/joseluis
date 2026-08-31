@@ -5,7 +5,7 @@
     modal.addEventListener('click',e=>{if(e.target===modal)modal.close()});
   }
 
-  const PRIVATE_REPO='https://github.com/ortiz-luis/joseluis-private-data/blob/main/';
+  const PRIVATE_REPO='https://github.com/ortiz-luis/joseluis-private-data/raw/refs/heads/main/';
   const privatePaths={
     'gmail-cv-es-v3':'documents/cv/CV_Moraga_Joseluis_ES_v3_2022.pdf',
     'gmail-cv-fr-v3':'documents/cv/CV_Moraga_Joseluis_FR_v3_2022.pdf',
@@ -28,7 +28,8 @@
     return d.sourceYear?String(d.sourceYear):'Pendiente';
   };
 
-  const canOpen=d=>!!(d&&(d.objectUrl||d.downloadUrl||d.privateUrl));
+  const hrefFor=d=>d&&(d.objectUrl||d.downloadUrl||d.privateUrl);
+  const canOpen=d=>!!hrefFor(d);
   const fileType=d=>{
     const n=(d?.name||'').toLowerCase();
     if(n.endsWith('.pdf'))return 'PDF';
@@ -38,15 +39,18 @@
     return 'DOC';
   };
 
-  function honestFileMark(d){
-    return `<span class="real-file-mark" aria-hidden="true">${esc(fileType(d))}</span>`;
+  function honestFileMark(d){return `<span class="real-file-mark" aria-hidden="true">${esc(fileType(d))}</span>`;}
+  function openRealDocument(d){
+    const href=hrefFor(d);
+    if(!href)return false;
+    window.open(href,'_blank','noopener');
+    return true;
   }
 
   function openDoc(d){
     if(!d)return;
-    const openable=canOpen(d);
-    const href=d.objectUrl||d.downloadUrl||d.privateUrl;
-    openModal(`<h2>${esc(d.name)}</h2><div class="document-summary">${honestFileMark(d)}<div><b>${esc(d.name)}</b><span>${esc(labelFor(d))}</span></div></div>${openable?`<div class="modal-actions"><a class="button primary" href="${esc(href)}" target="_blank" rel="noopener">Abrir documento</a>${d.needsUpdate?'<button class="button soft" id="replace-doc">Subir versión nueva</button>':''}</div>${d.privateUrl?'<p class="tiny center">Archivo privado · GitHub puede pedirte iniciar sesión.</p>':''}`:`<p class="doc-unavailable">Tenemos registrada esta versión, pero el archivo todavía no está conectado a la app.</p>${d.needsUpdate?'<button class="button primary full" id="replace-doc">Subir versión nueva</button>':''}`}`);
+    if(openRealDocument(d))return;
+    openModal(`<h2>${esc(d.name)}</h2><div class="document-summary">${honestFileMark(d)}<div><b>${esc(d.name)}</b><span>${esc(labelFor(d))}</span></div></div><p class="doc-unavailable">Tenemos registrada esta versión, pero el archivo todavía no está conectado a la app.</p>${d.needsUpdate?'<button class="button primary full" id="replace-doc">Subir versión nueva</button>':''}`);
     const replace=document.querySelector('#replace-doc');
     if(replace)replace.onclick=()=>{modal.close();document.querySelector('#file-input').click()};
   }
@@ -74,9 +78,7 @@
   }
 
   const oldBind=typeof bind==='function'?bind:null;
-  if(oldBind){
-    bind=function(){oldBind();document.querySelectorAll('[data-open-doc]').forEach(el=>el.onclick=()=>openDoc(state.documents.find(d=>d.id===el.dataset.openDoc)))};
-  }
+  if(oldBind){bind=function(){oldBind();document.querySelectorAll('[data-open-doc]').forEach(el=>el.onclick=()=>openDoc(state.documents.find(d=>d.id===el.dataset.openDoc)))};}
 
   if(typeof openReq==='function'){
     const originalOpenReq=openReq;
@@ -87,7 +89,8 @@
       const best=candidates.find(d=>d.status==='ready')||candidates.find(d=>d.status==='located')||candidates[0];
       const existing=best?`<div class="existing-doc-label">Versión que ya tenemos</div><button class="existing-doc-card truthful" id="open-existing"><div class="doc-list-main">${honestFileMark(best)}<span><b>${esc(best.name)}</b><small>${esc(labelFor(best))}</small></span></div><i>${canOpen(best)?'Abrir':'Ver'}</i></button>`:`<div class="empty compact-empty"><b>Todavía no lo tenemos</b><span>No hay un documento equivalente guardado.</span></div>`;
       openModal(`<h2>${esc(q.label)}</h2>${existing}<button class="button primary full" id="upload-new-version">${best?'Subir versión nueva':'Subir archivo'}</button>`);
-      const ex=document.querySelector('#open-existing');if(ex)ex.onclick=()=>openDoc(best);
+      const ex=document.querySelector('#open-existing');
+      if(ex)ex.onclick=()=>{if(canOpen(best)){modal.close();openRealDocument(best)}else openDoc(best)};
       document.querySelector('#upload-new-version').onclick=()=>{modal.close();document.querySelector('#file-input').click()};
     };
   }
