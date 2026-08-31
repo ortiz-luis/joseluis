@@ -50,8 +50,19 @@
     document.querySelectorAll('[data-download-doc]').forEach(el=>{el.onclick=e=>{e.preventDefault();e.stopPropagation();const d=state.documents.find(x=>x.id===el.dataset.downloadDoc);if(isUsable(d))window.postulaDocuments?.download(d).catch(console.error)}});
   }
 
+  function bindCategoryToggle(){
+    document.querySelectorAll('[data-docfilter]').forEach(el=>{
+      el.onclick=e=>{
+        e.preventDefault();
+        const category=el.dataset.docfilter;
+        docFilter=docFilter===category?'all':category;
+        render();
+      };
+    });
+  }
+
   const priorBind=bind;
-  bind=function(){priorBind();bindViewerButtons();};
+  bind=function(){priorBind();bindCategoryToggle();bindViewerButtons();};
   document.querySelector('#modal')?.addEventListener('close',()=>document.querySelector('#modal')?.classList.remove('viewer-modal'));
   render();
 })();
