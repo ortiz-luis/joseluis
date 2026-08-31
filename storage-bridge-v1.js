@@ -78,7 +78,7 @@
     [...input.files].forEach(file=>uploadFile(file).then(({doc})=>{
       if(doc){doc.fileStored=true;doc.storageProvider='supabase';try{save('Documento guardado')}catch{}}
     }).catch(err=>console.error('Supabase Storage upload failed',err)));
-  });
+  },true);
 
   document.addEventListener('click',async e=>{
     const view=e.target.closest?.('[data-view-doc]');
