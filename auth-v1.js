@@ -15,6 +15,20 @@
     return data;
   }
 
+  async function captureEmailSession(){
+    const raw=location.hash.startsWith('#')?location.hash.slice(1):'';
+    if(!raw.includes('access_token='))return null;
+    const p=new URLSearchParams(raw);
+    const access_token=p.get('access_token'),refresh_token=p.get('refresh_token');
+    if(!access_token||!refresh_token)return null;
+    const expires_in=Number(p.get('expires_in')||3600);
+    const s={access_token,refresh_token,expires_in,expires_at:Math.floor(Date.now()/1000)+expires_in,token_type:p.get('token_type')||'bearer'};
+    try{s.user=await authFetch('/auth/v1/user',{headers:{Authorization:`Bearer ${access_token}`}})}catch{return null}
+    saveSession(s);
+    history.replaceState(null,'',location.pathname+location.search+'#home');
+    return s;
+  }
+
   async function refresh(session){
     if(!session?.refresh_token)return null;
     try{
@@ -72,6 +86,7 @@
   }
 
   async function boot(){
+    const fromEmail=await captureEmailSession();if(fromEmail){unlock(fromEmail);return;}
     const s=await validSession();if(s){unlock(s);return;}
     const el=gate();
     const form=el.querySelector('#auth-form'),signup=el.querySelector('#auth-signup');
