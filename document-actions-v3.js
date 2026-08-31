@@ -31,7 +31,7 @@
         : '';
       return `<div class="document-category-group"><button class="wallet-row ${open?'active':''}" data-docfilter="${c}"><span>${icon(c)}</span><strong>${c}</strong><b>${counts[c]||0}</b><i>${open?'⌄':'›'}</i></button>${children}</div>`;
     }).join('');
-    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload">+</button></div><div class="wallet-list">${rows}</div></section>`;
+    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><div style="display:flex;align-items:center;gap:9px"><a href="cv-builder/" class="button soft" style="text-decoration:none">Crear CV</a><button class="circle-action" data-action="upload">+</button></div></div><div class="wallet-list">${rows}</div></section>`;
   };
 
   openReq=function(id,rid){
