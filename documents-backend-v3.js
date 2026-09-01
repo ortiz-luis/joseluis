@@ -6,9 +6,10 @@
   const PDFJS_MODULE=`https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.mjs`;
   const PDFJS_WORKER=`https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.mjs`;
   let pdfjsPromise=null;
+  let uploadContext=null;
 
   const currentAliases={
-    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte vigente',category:'Identidad'}
+    'Pasaporte_2022.pdf':{id:'gmail-passport',name:'Pasaporte vigente',category:'Identidad',documentRole:'passport'}
   };
 
   const token=()=>window.postulaAuth?.getAccessToken?.()||null;
@@ -50,6 +51,7 @@
         backendId:row.id,
         name:a?.name||row.name,
         category:a?.category||((['Identidad','CV','Estudios','Idiomas','Recomendaciones','Muestras','Otros'].includes(row.category))?row.category:inferCategory(row.name)),
+        documentRole:a?.documentRole||row.document_role||null,
         status:'ready',fileStored:true,storageProvider:'supabase',storagePath:row.storage_path,
         mimeType:row.mime_type||'',sizeBytes:row.size_bytes||null,updated:row.updated_at||row.created_at,
         source:'Supabase',needsUpdate:false,objectUrl:`postula-storage:${row.storage_path}`,
@@ -68,10 +70,12 @@
     const path=`${user.id}/${Date.now()}-${clean(file.name)}`;
     const up=await fetch(storageUrl(path),{method:'POST',headers:headers({'Content-Type':file.type||'application/octet-stream','x-upsert':'true'}),body:file});
     if(!up.ok)throw new Error(await up.text()||`Storage ${up.status}`);
-    const existing=await dbRequest(`documents?select=id&name=eq.${encodeURIComponent(file.name)}&limit=1`);
-    const payload={category,storage_path:path,mime_type:file.type||null,size_bytes:file.size,status:'ready',updated_at:new Date().toISOString()};
+    const existing=await dbRequest(`documents?select=id,document_role&name=eq.${encodeURIComponent(file.name)}&limit=1`);
+    const role=uploadContext?.role||existing?.[0]?.document_role||null;
+    const payload={category,document_role:role,storage_path:path,mime_type:file.type||null,size_bytes:file.size,status:'ready',updated_at:new Date().toISOString()};
     if(Array.isArray(existing)&&existing.length)await dbRequest(`documents?id=eq.${existing[0].id}`,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify(payload)});
     else await dbRequest('documents',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:user.id,name:file.name,...payload})});
+    uploadContext=null;
     await loadDocuments();
   }
 
@@ -131,7 +135,7 @@
     const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=doc.name||'documento';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);return true;
   }
 
-  document.addEventListener('change',e=>{const input=e.target;if(!(input instanceof HTMLInputElement)||input.id!=='file-input'||!input.files?.length)return;[...input.files].forEach(file=>uploadFile(file).catch(err=>{console.error('Document upload failed',err);alert('No se pudo guardar el documento: '+err.message)}));},true);
+  document.addEventListener('change',e=>{const input=e.target;if(!(input instanceof HTMLInputElement)||input.id!=='file-input'||!input.files?.length)return;[...input.files].forEach(file=>uploadFile(file).catch(err=>{uploadContext=null;console.error('Document upload failed',err);alert('No se pudo guardar el documento: '+err.message)}));},true);
   document.addEventListener('click',e=>{
     const del=e.target.closest?.('[data-delete-doc]');
     if(del){
@@ -151,5 +155,5 @@
 
   function boot(){if(token())loadDocuments().catch(console.error);else setTimeout(boot,250);}
   window.addEventListener('hashchange',()=>{if(token())loadDocuments().catch(console.error)});
-  boot();window.postulaDocuments={loadDocuments,uploadFile,deleteDocument,visualize,download};
+  boot();window.postulaDocuments={loadDocuments,uploadFile,deleteDocument,visualize,download,setUploadContext:ctx=>{uploadContext=ctx||null},clearUploadContext:()=>{uploadContext=null}};
 })();
