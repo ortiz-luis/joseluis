@@ -75,6 +75,15 @@
     await loadDocuments();
   }
 
+  async function deleteDocument(doc){
+    if(!doc?.storagePath||!doc?.backendId)throw new Error('Documento no eliminable');
+    const delStorage=await fetch(storageUrl(doc.storagePath),{method:'DELETE',headers:headers()});
+    if(!delStorage.ok&&delStorage.status!==404)throw new Error(await delStorage.text()||`Storage ${delStorage.status}`);
+    await dbRequest(`documents?id=eq.${encodeURIComponent(doc.backendId)}`,{method:'DELETE',headers:{Prefer:'return=minimal'}});
+    await loadDocuments();
+    return true;
+  }
+
   async function fetchBlob(doc){
     if(!doc?.storagePath)return null;
     const r=await fetch(storageUrl(doc.storagePath),{headers:headers()});
@@ -124,11 +133,23 @@
 
   document.addEventListener('change',e=>{const input=e.target;if(!(input instanceof HTMLInputElement)||input.id!=='file-input'||!input.files?.length)return;[...input.files].forEach(file=>uploadFile(file).catch(err=>{console.error('Document upload failed',err);alert('No se pudo guardar el documento: '+err.message)}));},true);
   document.addEventListener('click',e=>{
+    const del=e.target.closest?.('[data-delete-doc]');
+    if(del){
+      const doc=state?.documents?.find(x=>x.id===del.dataset.deleteDoc);
+      if(doc?.status==='ready'&&doc?.storagePath){
+        e.preventDefault();e.stopImmediatePropagation();
+        if(confirm(`¿Eliminar ${doc.name}? Esta acción elimina el archivo guardado.`)){
+          del.disabled=true;
+          deleteDocument(doc).catch(err=>{console.error('Document delete failed',err);del.disabled=false;alert('No se pudo eliminar el documento: '+err.message)});
+        }
+        return;
+      }
+    }
     const v=e.target.closest?.('[data-visualize-doc],[data-view-doc]');if(v){const id=v.dataset.visualizeDoc||v.dataset.viewDoc,doc=state?.documents?.find(d=>d.id===id);if(doc?.status==='ready'&&doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();visualize(doc).catch(console.error);return;}}
     const d=e.target.closest?.('[data-download-doc]');if(d){const doc=state?.documents?.find(x=>x.id===d.dataset.downloadDoc);if(doc?.status==='ready'&&doc?.storagePath){e.preventDefault();e.stopImmediatePropagation();download(doc).catch(console.error);}}
   },true);
 
   function boot(){if(token())loadDocuments().catch(console.error);else setTimeout(boot,250);}
   window.addEventListener('hashchange',()=>{if(token())loadDocuments().catch(console.error)});
-  boot();window.postulaDocuments={loadDocuments,uploadFile,visualize,download};
+  boot();window.postulaDocuments={loadDocuments,uploadFile,deleteDocument,visualize,download};
 })();
