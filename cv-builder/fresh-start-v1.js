@@ -6,7 +6,8 @@
   const stripDefaultPhoto=()=>{
     if(!isBlankMode())return;
     const p=document.querySelector('#preview');if(!p)return;
-    p.querySelectorAll('.legacy-photo,.cv-photo').forEach(el=>{
+    p.querySelectorAll('.cv-photo').forEach(el=>el.remove());
+    p.querySelectorAll('.legacy-photo').forEach(el=>{
       if(el.tagName==='IMG'){
         const d=document.createElement('div');d.className='legacy-photo placeholder blank-photo';d.textContent='';el.replaceWith(d);
       }else{el.textContent='';el.classList.add('blank-photo')}
