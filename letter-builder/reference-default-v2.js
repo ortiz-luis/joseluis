@@ -1,7 +1,13 @@
 (() => {
   const KEY='joseluis-letter-builder-v3';
-  const MARK='joseluis-letter-reference-v2';
-  if(localStorage.getItem(MARK)) return;
+  const BLANK_ONCE='joseluis-letter-builder-blank-once-v1';
+
+  // "Empezar desde cero" may suppress the reference exactly once,
+  // for the current blank editing session. The next visit restores it.
+  if(sessionStorage.getItem(BLANK_ONCE)==='1'){
+    sessionStorage.removeItem(BLANK_ONCE);
+    return;
+  }
 
   const reference={
     sender:{
@@ -33,6 +39,4 @@
   };
 
   localStorage.setItem(KEY,JSON.stringify(reference));
-  localStorage.setItem(MARK,'1');
-  location.reload();
 })();
