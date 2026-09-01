@@ -9,7 +9,8 @@
   };
   const mark=d=>{const n=(d?.name||'').toLowerCase();return n.endsWith('.pdf')?'PDF':(n.endsWith('.doc')||n.endsWith('.docx'))?'DOC':/\.(png|jpe?g|webp)$/i.test(n)?'IMG':d?.category==='CV'?'CV':'DOC'};
   const actions=d=>`<div class="doc-list-actions"><button type="button" data-view-doc="${esc(d.id)}">Visualizar</button><button type="button" data-download-doc="${esc(d.id)}">Descargar</button></div>`;
-  const nested=d=>`<div class="doc-item" style="margin:8px 0 10px 28px;width:calc(100% - 28px);box-sizing:border-box"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>Listo</span></div></div>${actions(d)}</div>`;
+  const trashIcon=()=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8v9m4-9v9m4-9v9M5 5h14M9 5V3h6v2m-9 0 1 16h10l1-16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const nested=d=>`<div class="doc-item-shell"><div class="doc-item"><div class="doc-list-main"><span class="real-file-mark">${mark(d)}</span><div><strong>${esc(d.name)}</strong><span>Listo</span></div></div>${actions(d)}</div><button type="button" class="doc-trash" data-delete-doc="${esc(d.id)}" aria-label="Eliminar ${esc(d.name)}" title="Eliminar documento">${trashIcon()}</button></div>`;
   const builderActions=()=>`<div class="doc-builder-actions"><a href="cv-builder/"><span>CV</span><strong>Crear CV</strong></a><a href="letter-builder/"><span>Carta</span><strong>Crear carta</strong></a></div>`;
   const cats=[
     ['Identidad','Identidad'],
@@ -26,11 +27,21 @@
       let children='';
       if(open){
         if(id==='CV') children+=builderActions();
-        children+=docs.length?docs.map(nested).join(''):`<div class="empty" style="margin:8px 0 10px 28px;width:calc(100% - 28px);box-sizing:border-box">Sin documentos utilizables en 2026</div>`;
+        children+=docs.length?docs.map(nested).join(''):`<div class="empty category-empty">Sin documentos utilizables en 2026</div>`;
       }
-      return `<div class="document-category-group"><button class="wallet-row ${open?'active':''}" data-docfilter="${id}"><span>${icon(id)}</span><strong>${title}</strong><b>${docs.length}</b><i>${open?'⌄':'›'}</i></button>${children}</div>`;
+      return `<div class="document-category-group"><div class="category-row-shell"><button class="wallet-row ${open?'active':''}" data-docfilter="${id}"><span>${icon(id)}</span><strong>${title}</strong><b>${docs.length}</b><i>${open?'⌄':'›'}</i></button><button type="button" class="category-add" data-upload-category="${id}" aria-label="Añadir documento a ${title}" title="Añadir documento">+</button></div>${children}</div>`;
     }).join('');
-    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1><button class="circle-action" data-action="upload" aria-label="Añadir documento">+</button></div><div class="wallet-list">${rows}</div></section>`;
+    return `<section class="page"><div class="page-head compact"><h1>Documentos</h1></div><div class="wallet-list">${rows}</div></section>`;
   };
+
+  document.addEventListener('click',e=>{
+    const add=e.target.closest?.('[data-upload-category]');
+    if(!add)return;
+    e.preventDefault();e.stopPropagation();
+    docFilter=add.dataset.uploadCategory;
+    const input=document.querySelector('#file-input');
+    if(input){input.value='';input.click()}
+  },true);
+
   render();
 })();
