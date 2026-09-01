@@ -79,10 +79,6 @@
         saveSession(null);location.reload();
       }
     };
-    const chip=document.querySelector('.user-chip');
-    if(chip&&!chip.querySelector('.auth-signout')){
-      const b=document.createElement('button');b.type='button';b.className='auth-signout';b.textContent='Salir';b.onclick=()=>window.postulaAuth.signOut();chip.appendChild(b);
-    }
   }
 
   async function boot(){
