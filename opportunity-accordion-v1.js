@@ -5,12 +5,14 @@
   const requirementIcon=q=>q.state==='ready'?'✓':'›';
   const fact=(label,value)=>value?`<div style="min-width:0"><span style="display:block;color:#718078;font-size:12px;margin-bottom:4px">${esc(label)}</span><strong style="display:block;font-size:15px;line-height:1.25">${esc(value)}</strong></div>`:'';
   const linkedDoc=q=>(state.documents||[]).find(d=>d?.status==='ready'&&d?.storagePath&&window.postulaDocumentMatch?.(d,q));
+  const trashIcon=()=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8v9m4-9v9m4-9v9M5 5h14M9 5V3h6v2m-9 0 1 16h10l1-16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
   const requirementDetails=(o,q)=>{
     const done=q.state==='ready',doc=q.type==='document'?linkedDoc(q):null;
+    const role=doc?(window.postulaDocumentRoleLabel?.(doc.documentRole)||'documento'):'';
     const action=q.type==='document'
       ? doc
-        ? `<button type="button" class="button soft" data-view-doc="${esc(doc.id)}">Visualizar ${esc(window.postulaDocumentRoleLabel?.(doc.documentRole)||'documento')}</button>`
+        ? `<div class="opp-linked-doc-actions"><button type="button" class="button soft" data-view-doc="${esc(doc.id)}">Visualizar ${esc(role)}</button><button type="button" class="opp-linked-doc-trash" data-delete-doc="${esc(doc.id)}" aria-label="Eliminar ${esc(doc.name)}" title="Eliminar documento">${trashIcon()}</button></div>`
         : `<button type="button" class="button soft" data-action="req" data-id="${esc(o.id)}" data-req="${esc(q.id)}">${esc(q.actionLabel||'Abrir / subir documento')}</button>`
       : `<button type="button" class="button ${done?'soft':'primary'}" data-requirement-done="${esc(q.id)}" data-opportunity="${esc(o.id)}">${done?'Marcar por hacer':'Marcar listo'}</button>`;
     return `<details class="opp-req-accordion" style="border:1px solid #dfe8e3;border-radius:16px;background:#fff;margin:0 0 10px;overflow:hidden">
@@ -21,7 +23,7 @@
       </summary>
       <div style="padding:0 18px 17px 56px;border-top:1px solid #edf2ef">
         <p style="margin:14px 0 14px;color:#56655e;line-height:1.55;max-width:760px">${esc(q.help||'')}</p>
-        ${doc?`<div class="existing-doc-label" style="margin-bottom:8px">${esc(window.postulaDocumentRoleLabel?.(doc.documentRole)||q.label)} · ${esc(doc.name)}</div>`:''}
+        ${doc?`<div class="existing-doc-label" style="margin-bottom:8px">${esc(role||q.label)} · ${esc(doc.name)}</div>`:''}
         ${action}
       </div>
     </details>`;
