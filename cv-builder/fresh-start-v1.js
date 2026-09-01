@@ -18,6 +18,12 @@
     localStorage.setItem(KEY,JSON.stringify(blank()));
     location.reload();
   });
+  const restore=document.querySelector('#clear-data');
+  if(restore)restore.onclick=()=>{
+    if(!confirm('¿Restaurar los valores de referencia antiguos? Se reemplazarán los cambios guardados en este navegador.'))return;
+    localStorage.removeItem(KEY);
+    location.reload();
+  };
   document.querySelector('#photo-input')?.addEventListener('change',()=>setTimeout(()=>{
     const d=stored();if(d?.basics?.photo){d._blankMode=false;localStorage.setItem(KEY,JSON.stringify(d))}
   },50));
