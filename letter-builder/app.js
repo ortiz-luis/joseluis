@@ -22,13 +22,19 @@
     }
   });
 
+  const fillIfBlank=(saved,base,keys)=>{
+    const out={...base,...(saved||{})};
+    keys.forEach(k=>{if(!String(out[k]??'').trim())out[k]=base[k]});
+    return out;
+  };
+
   function mergeSaved(saved){
     const d=defaults();
     if(!saved || typeof saved!=='object') return d;
     return {
       sender:{...d.sender,...(saved.sender||{})},
-      es:{...d.es,...(saved.es||{})},
-      fr:{...d.fr,...(saved.fr||{})}
+      es:fillIfBlank(saved.es,d.es,['recipient','subject','opening','body','closing']),
+      fr:fillIfBlank(saved.fr,d.fr,['recipient','subject','opening','body','closing'])
     };
   }
 
@@ -49,5 +55,5 @@
   function render(){const d=letters[lang],s=letters.sender||defaults().sender,subjectPrefix=lang==='fr'?'Objet :':'Asunto:';document.querySelector('#preview').innerHTML=`<div class="sender"><strong>${h(s.name)}</strong>${s.address?`<span>${h(s.address)}</span>`:''}${s.phone?`<span>✎ ${h(s.phone)}</span>`:''}${s.email?`<span>✉ ${h(s.email)}</span>`:''}</div><div class="date">${h(d.date)}</div><div class="recipient"><strong>${h(d.recipient)}</strong>${d.address?`<span>${h(d.address)}</span>`:''}</div>${d.subject?`<div class="subject"><span>${subjectPrefix}</span> ${h(d.subject)}</div>`:''}<div class="opening">${h(d.opening)}</div><div class="body">${paras(d.body)}</div><div class="closing">${h(d.closing)}</div><div class="signature"><strong>${h(s.name)}</strong>${s.subtitle?`<span>${h(s.subtitle)}</span>`:''}</div>`}
   function latex(){const d=letters[lang],s=letters.sender||defaults().sender,prefix=lang==='fr'?'Objet :':'Asunto:';return `\\documentclass[11pt,a4paper]{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage[T1]{fontenc}\n\\usepackage[a4paper,top=1.7cm,bottom=1.7cm,left=2.0cm,right=2.0cm]{geometry}\n\\usepackage{ragged2e}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0pt}\n\\begin{document}\n\\begin{flushright}\n\\textbf{${tex(s.name)}}\\\\\n${tex(s.address).replace(/\n/g,'\\\\\n')}\\\\\n${tex(s.phone)}\\\\\n${tex(s.email)}\n\\end{flushright}\n\\vspace{1.2em}\n\\begin{flushright}${tex(d.date)}\\end{flushright}\n\\vspace{0.5em}\n\\textbf{${tex(d.recipient)}}\\\\\n${tex(d.address).replace(/\n/g,'\\\\\n')}\n\\vspace{4.5em}\n\\textbf{${prefix}} ${tex(d.subject)}\n\\vspace{2.2em}\n${tex(d.opening)}\n\\vspace{1.4em}\n\\justifying\n${tex(d.body).replace(/\n\n/g,'\\par\\vspace{0.7em}\n').replace(/\n/g,' ')}\n\\vspace{0.9em}\n\\begin{center}${tex(d.closing)}\\end{center}\n\\vspace{2.2em}\n\\begin{flushright}\\textbf{${tex(s.name)}}${s.subtitle?`\\\\${tex(s.subtitle)}`:''}\\end{flushright}\n\\end{document}`}
   const dl=(n,t)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/plain'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)};
-  document.querySelector('#tex').onclick=()=>dl(`Carta_${lang.toUpperCase()}.tex`,latex());document.querySelector('#pdf').onclick=()=>window.print();fill();
+  document.querySelector('#tex').onclick=()=>dl(`Carta_${lang.toUpperCase()}.tex`,latex());document.querySelector('#pdf').onclick=()=>window.print();save();fill();
 })();
