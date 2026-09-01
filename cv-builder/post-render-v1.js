@@ -39,9 +39,24 @@
     }
   }
 
+  function refineInterestIcons(){
+    const p=preview();
+    if(!p) return;
+    p.querySelectorAll('.legacy-interests span').forEach(span=>{
+      if(span.querySelector('.legacy-interest-icon')) return;
+      const text=span.textContent.replace(/^\s*☕\s*/,'').trim();
+      span.textContent='';
+      const icon=document.createElement('i');
+      icon.className='legacy-interest-icon';
+      icon.setAttribute('aria-hidden','true');
+      span.append(icon,document.createTextNode(text));
+    });
+  }
+
   function reconcile(){
     applyDefaultPhoto();
     cleanPreview();
+    refineInterestIcons();
   }
 
   reconcile();
