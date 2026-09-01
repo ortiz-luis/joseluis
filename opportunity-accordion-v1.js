@@ -4,11 +4,14 @@
   const requirementState=q=>q.state==='ready'?'Listo':'Por hacer';
   const requirementIcon=q=>q.state==='ready'?'✓':'›';
   const fact=(label,value)=>value?`<div style="min-width:0"><span style="display:block;color:#718078;font-size:12px;margin-bottom:4px">${esc(label)}</span><strong style="display:block;font-size:15px;line-height:1.25">${esc(value)}</strong></div>`:'';
+  const linkedDoc=q=>(state.documents||[]).find(d=>d?.status==='ready'&&d?.storagePath&&window.postulaDocumentMatch?.(d,q));
 
   const requirementDetails=(o,q)=>{
-    const done=q.state==='ready';
+    const done=q.state==='ready',doc=q.type==='document'?linkedDoc(q):null;
     const action=q.type==='document'
-      ? `<button type="button" class="button soft" data-action="req" data-id="${esc(o.id)}" data-req="${esc(q.id)}">${esc(q.actionLabel||'Abrir / subir documento')}</button>`
+      ? doc
+        ? `<button type="button" class="button soft" data-view-doc="${esc(doc.id)}">Visualizar ${esc(window.postulaDocumentRoleLabel?.(doc.documentRole)||'documento')}</button>`
+        : `<button type="button" class="button soft" data-action="req" data-id="${esc(o.id)}" data-req="${esc(q.id)}">${esc(q.actionLabel||'Abrir / subir documento')}</button>`
       : `<button type="button" class="button ${done?'soft':'primary'}" data-requirement-done="${esc(q.id)}" data-opportunity="${esc(o.id)}">${done?'Marcar por hacer':'Marcar listo'}</button>`;
     return `<details class="opp-req-accordion" style="border:1px solid #dfe8e3;border-radius:16px;background:#fff;margin:0 0 10px;overflow:hidden">
       <summary style="list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center">
@@ -18,6 +21,7 @@
       </summary>
       <div style="padding:0 18px 17px 56px;border-top:1px solid #edf2ef">
         <p style="margin:14px 0 14px;color:#56655e;line-height:1.55;max-width:760px">${esc(q.help||'')}</p>
+        ${doc?`<div class="existing-doc-label" style="margin-bottom:8px">${esc(window.postulaDocumentRoleLabel?.(doc.documentRole)||q.label)} · ${esc(doc.name)}</div>`:''}
         ${action}
       </div>
     </details>`;
@@ -28,6 +32,7 @@
     if(!o)return `<section class="page"><h1>No encontrada</h1></section>`;
     sync(o);
     const req=o.requirements||[];
+    req.forEach(q=>{if(q.type==='document')q.state=linkedDoc(q)?'ready':'action'});
     const ready=req.filter(x=>x.state==='ready').length;
     const todo=req.length-ready;
     const next=req.find(x=>x.state!=='ready');
