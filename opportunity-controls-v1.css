@@ -1,0 +1,11 @@
+.opp-req-accordion .button,.page select[data-action="status"],.page a[target="_blank"]{font:inherit}
+.opp-req-accordion .button{min-height:40px;padding:0 15px;border-radius:11px;border:1px solid var(--line);font-size:13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none;transition:.15s ease;box-shadow:none}
+.opp-req-accordion .button.primary{background:var(--green);border-color:var(--green);color:#fff}
+.opp-req-accordion .button.soft{background:var(--green2);border-color:#cfe5da;color:#196b49}
+.opp-req-accordion .button:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(30,64,55,.08)}
+.page select[data-action="status"]{appearance:none;-webkit-appearance:none;min-height:40px;padding:0 38px 0 13px;border:1px solid var(--line);border-radius:11px;background-color:var(--panel);color:var(--ink);font-size:13px;font-weight:750;cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 17px,calc(100% - 11px) 17px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.page select[data-action="status"]+a[target="_blank"]{min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--green);font-size:13px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;transition:.15s ease}
+.page select[data-action="status"]+a[target="_blank"]:hover{background:var(--green2);border-color:#cfe5da;transform:translateY(-1px)}
+:root[data-theme='dark'] .opp-req-accordion .button.soft{background:#1d3328;border-color:#315241;color:#7bd3a1}
+:root[data-theme='dark'] .page select[data-action="status"],:root[data-theme='dark'] .page select[data-action="status"]+a[target="_blank"]{background-color:var(--panel);border-color:var(--line);color:var(--ink)}
+:root[data-theme='dark'] .page select[data-action="status"]+a[target="_blank"]{color:#7bd3a1}
