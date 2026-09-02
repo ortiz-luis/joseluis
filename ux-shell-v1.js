@@ -11,7 +11,7 @@
  function setRecents(items){localStorage.setItem(RECENTS_KEY,JSON.stringify(items.slice(0,7)))}
  function track(){const h=location.hash||'#home';const r=route();if(['home','profile','settings','recent'].includes(r.page))return;const item={hash:h,title:titleForHash(h),t:Date.now()};setRecents([item,...getRecents().filter(x=>x.hash!==h)])}
  function collapse(){if(mobile()){document.body.classList.remove('ux-drawer-open')}else{document.body.classList.add('ux-desktop-collapsed')}syncAria()}
- function expand(){if(mobile()){document.body.classList.add('ux-drawer-open');setTimeout(()=>$('#ux-search-input')?.focus(),60)}else{document.body.classList.remove('ux-desktop-collapsed')}syncAria()}
+ function expand(){if(mobile()){document.body.classList.add('ux-drawer-open')}else{document.body.classList.remove('ux-desktop-collapsed')}syncAria()}
  function syncAria(){const b=$('.ux-menu');if(!b)return;const expanded=mobile()?document.body.classList.contains('ux-drawer-open'):!document.body.classList.contains('ux-desktop-collapsed');b.setAttribute('aria-expanded',String(expanded))}
  function renderRecents(){const box=$('#ux-recents');if(!box)return;const items=getRecents();box.innerHTML=items.length?items.map(x=>`<a class="ux-recent" href="${esc(x.hash)}">${esc(x.title)}</a>`).join(''):'<div class="ux-recent-empty">Todavía no hay elementos recientes</div>'}
  function searchData(q){const s=state(),needle=q.trim().toLowerCase();if(!needle)return[];const base=[{title:'Inicio',meta:'Sección',hash:'#home'},{title:'Oportunidades',meta:'Sección',hash:'#opportunities'},{title:'Documentos',meta:'Sección',hash:'#documents'},{title:'CV y cartas',meta:'Sección',hash:'#create'},{title:'Plantillas',meta:'Sección',hash:'#templates'}];const opps=(s.opportunities||[]).map(o=>({title:o.title,meta:[o.institution,o.country,o.city].filter(Boolean).join(' · '),hash:`#opportunity/${o.id}`}));const docs=(s.documents||[]).map(d=>({title:d.name||'Documento',meta:['Documento',d.category].filter(Boolean).join(' · '),hash:'#documents'}));return [...base,...opps,...docs].filter(x=>(`${x.title} ${x.meta}`).toLowerCase().includes(needle)).slice(0,12)}
@@ -24,13 +24,16 @@
   const search=document.createElement('div');search.innerHTML='<label class="ux-search"><span>⌕</span><input id="ux-search-input" type="search" placeholder="Buscar" autocomplete="off" aria-label="Buscar en todo el portal"></label><div id="ux-results" class="ux-results"></div>';head.after(search);
   if(nav){nav.insertAdjacentHTML('afterend','<div class="ux-section-label">Recientes</div><div id="ux-recents" class="ux-recents"></div>')}
   if(foot){foot.innerHTML='<a class="ux-account" href="#profile"><span class="ux-account-avatar">JL</span><span>José Luis</span></a>'}
-  topbar.innerHTML='<div class="ux-topbar-left"><button class="ux-menu" type="button" aria-label="Mostrar barra lateral" aria-expanded="true">☰</button><span class="ux-page-title"></span></div>';
+  topbar.innerHTML='<div class="ux-topbar-left"><button class="ux-menu" type="button" aria-label="Mostrar barra lateral" aria-expanded="true"><span aria-hidden="true">☰</span></button><span class="ux-page-title"></span></div>';
   document.body.insertAdjacentHTML('beforeend','<div class="ux-scrim" aria-hidden="true"></div>');
-  $('.ux-menu')?.addEventListener('click',expand);$('.ux-close')?.addEventListener('click',collapse);$('.ux-scrim')?.addEventListener('click',collapse);
+  $('.ux-menu')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();expand()});
+  $('.ux-close')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();collapse()});
+  $('.ux-scrim')?.addEventListener('click',collapse);
   $('#ux-search-input')?.addEventListener('input',renderResults);
   sidebar.addEventListener('click',e=>{if(mobile()&&e.target.closest('a'))collapse()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mobile())collapse();if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();expand();setTimeout(()=>$('#ux-search-input')?.focus(),50)}});
-  window.addEventListener('resize',()=>{document.body.classList.remove('ux-drawer-open');syncAria()});
+  let wasMobile=mobile();
+  window.addEventListener('resize',()=>{const nowMobile=mobile();if(nowMobile!==wasMobile){document.body.classList.remove('ux-drawer-open');wasMobile=nowMobile}syncAria()});
   renderRecents();refreshTitle();syncAria();
  }
  function onRoute(){track();renderRecents();refreshTitle();renderResults();if(mobile())collapse()}
