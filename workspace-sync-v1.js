@@ -3,7 +3,7 @@
   const SUPABASE_KEY='sb_publishable_-1TjOOzBlXwxaXuyOotQAg_c33AjzCN';
   const ACTIVE_USER_KEY='postula-active-user-v2';
   const ADMIN_WORKSPACE_KEY='postula-admin-workspace-v1';
-  let info=null,ready=false,saveTimer=null,saveWrapped=false;
+  let info=null,ready=false,saveTimer=null,saveWrapped=false,lastError=null;
 
   const token=()=>window.postulaAuth?.getAccessToken?.()||null;
   const headers=(extra={})=>({apikey:SUPABASE_KEY,Authorization:`Bearer ${token()}`,'Content-Type':'application/json',...extra});
@@ -28,6 +28,11 @@
       persistLocal();
     }
     localStorage.setItem(ACTIVE_USER_KEY,uid);
+  }
+  function reportError(err){
+    lastError=String(err?.message||err||'No se pudo cargar el espacio');
+    ready=false;
+    window.dispatchEvent(new CustomEvent('postula-workspace-error',{detail:{message:lastError}}));
   }
 
   async function pushState(){
@@ -69,6 +74,7 @@
   }
 
   async function load(options={}){
+    lastError=null;
     if(!token())return false;
     const session=window.postulaAuth?.getSession?.(),uid=session?.user?.id;if(!uid)return false;
     isolateBrowserForUser(uid);
@@ -120,8 +126,15 @@
   async function switchWorkspace(workspaceId){
     if(!info?.isAdmin)throw new Error('Permiso de administrador requerido');
     localStorage.setItem(ADMIN_WORKSPACE_KEY,workspaceId);ready=false;
-    await load({workspaceId});return info;
+    try{await load({workspaceId});return info}catch(err){reportError(err);throw err}
   }
-  window.postulaWorkspace={info:()=>info,isReady:()=>ready,pushState,listPeople,addMember,removeMember,listWorkspaces:allWorkspaces,switchWorkspace,reload:load};
-  let tries=0;const boot=()=>{if(token())load().catch(console.error);else if(++tries<80)setTimeout(boot,150)};boot();
+  async function reload(){
+    ready=false;
+    try{return await load()}catch(err){reportError(err);throw err}
+  }
+  window.postulaWorkspace={info:()=>info,isReady:()=>ready,lastError:()=>lastError,pushState,listPeople,addMember,removeMember,listWorkspaces:allWorkspaces,switchWorkspace,reload};
+  let tries=0;const boot=()=>{
+    if(token())reload().catch(console.error);
+    else if(++tries<80)setTimeout(boot,150)
+  };boot();
 })();
