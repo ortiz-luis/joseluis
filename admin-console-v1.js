@@ -14,8 +14,10 @@
   }
 
   function adminPage(){
-    if(!isAdmin())return '<section class="page final-page"><h1>Sin acceso</h1><p>Esta sección sólo está disponible para el administrador.</p></section>';
-    const i=info(),u=session()?.user,ws=workspaces||[];
+    const i=info();
+    if(!i)return '<section class="page final-page"><h1>Cargando administración…</h1><p>Comprobando tu cuenta y permisos.</p></section>';
+    if(!i.isAdmin)return '<section class="page final-page"><h1>Sin acceso</h1><p>Esta sección sólo está disponible para el administrador.</p></section>';
+    const u=session()?.user,ws=workspaces||[];
     const users=new Set(ws.flatMap(w=>(w.members||[]).map(m=>m.user_id))).size;
     return `<section class="page final-page admin-console">
       <div class="final-page-head"><div><span class="admin-eyebrow">SUPERUSUARIO</span><h1>Administración</h1><p class="admin-lead">Herramientas del sistema que los usuarios normales no ven.</p></div></div>
@@ -82,5 +84,11 @@
 
   window.addEventListener('postula-workspace-ready',()=>{if(isAdmin())refreshWorkspaces();enforceRoleUI();render()});
   window.addEventListener('hashchange',()=>{if(route().page==='admin'&&isAdmin()&&!workspaces)refreshWorkspaces()});
-  let tries=0;const boot=()=>{if(info()){if(isAdmin())refreshWorkspaces();enforceRoleUI()}else if(++tries<80)setTimeout(boot,150)};boot();
+  let tries=0;const boot=()=>{
+    if(info()){
+      if(isAdmin())refreshWorkspaces();
+      enforceRoleUI();
+      if(route().page==='admin')render();
+    }else if(++tries<80)setTimeout(boot,150)
+  };boot();
 })();
