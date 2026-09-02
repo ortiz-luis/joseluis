@@ -1,30 +1,33 @@
 (() => {
   if(typeof state==='undefined')return;
 
-  const requirementState=q=>q.state==='ready'?'Listo':'Por hacer';
-  const requirementIcon=q=>q.state==='ready'?'✓':'›';
+  const requirementState=(q,done)=>done?'Listo para el dossier':'Por preparar';
+  const requirementIcon=(q,done)=>done?'✓':'›';
   const fact=(label,value)=>value?`<div style="min-width:0"><span style="display:block;color:#718078;font-size:12px;margin-bottom:4px">${esc(label)}</span><strong style="display:block;font-size:15px;line-height:1.25">${esc(value)}</strong></div>`:'';
   const linkedDoc=q=>(state.documents||[]).find(d=>d?.status==='ready'&&d?.storagePath&&window.postulaDocumentMatch?.(d,q));
   const trashIcon=()=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8v9m4-9v9m4-9v9M5 5h14M9 5V3h6v2m-9 0 1 16h10l1-16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+  const guidanceFor=(o,q)=>window.postulaRequirementGuidance?.(o,q)||{advice:q.help||'No hace falta resolverlo todo ahora. Guarda lo que ya tengas y vuelve a este punto cuando estés listo.',category:q.category||'Otros'};
+
   const requirementDetails=(o,q)=>{
-    const done=q.state==='ready',doc=q.type==='document'?linkedDoc(q):null;
-    const role=doc?(window.postulaDocumentRoleLabel?.(doc.documentRole)||'documento'):'';
-    const action=q.type==='document'
-      ? doc
-        ? `<div class="opp-linked-doc-actions"><button type="button" class="button soft" data-view-doc="${esc(doc.id)}">Visualizar ${esc(role)}</button><button type="button" class="opp-linked-doc-trash" data-delete-doc="${esc(doc.id)}" aria-label="Eliminar ${esc(doc.name)}" title="Eliminar documento">${trashIcon()}</button></div>`
-        : `<button type="button" class="button soft" data-action="req" data-id="${esc(o.id)}" data-req="${esc(q.id)}">${esc(q.actionLabel||'Abrir / subir documento')}</button>`
-      : `<button type="button" class="button ${done?'soft':'primary'}" data-requirement-done="${esc(q.id)}" data-opportunity="${esc(o.id)}">${done?'Marcar por hacer':'Marcar listo'}</button>`;
+    const doc=linkedDoc(q),done=q.state==='ready'||!!doc,g=guidanceFor(o,q);
+    const role=doc?(window.postulaDocumentRoleLabel?.(doc.documentRole)||q.label||'documento'):'';
+    const official=g.url?`<a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.label||'Ver requisito oficial')} ↗</a>`:'';
+    const docActions=doc
+      ? `<div class="opp-linked-doc-actions"><button type="button" class="button soft" data-view-doc="${esc(doc.id)}">Visualizar respaldo</button><button type="button" class="opp-linked-doc-trash" data-delete-doc="${esc(doc.id)}" aria-label="Eliminar ${esc(doc.name)}" title="Eliminar documento">${trashIcon()}</button></div>`
+      : '';
+    const upload=`<button type="button" class="button ${doc?'soft':'primary'}" data-action="req" data-id="${esc(o.id)}" data-req="${esc(q.id)}">${doc?'Subir otro respaldo':'Subir respaldo al dossier'}</button>`;
+    const manual=q.type!=='document'?`<button type="button" class="button soft opp-req-secondary" data-requirement-done="${esc(q.id)}" data-opportunity="${esc(o.id)}">${done?'Marcar como pendiente':'Marcar resuelto sin archivo'}</button>`:'';
     return `<details class="opp-req-accordion" style="border:1px solid #dfe8e3;border-radius:16px;background:#fff;margin:0 0 10px;overflow:hidden">
       <summary style="list-style:none;cursor:pointer;padding:16px 18px;display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center">
-        <span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:${done?'#e8f5ee':'#f7f2e8'};font-weight:800;color:${done?'#16764a':'#9a6b24'}">${requirementIcon(q)}</span>
+        <span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:${done?'#e8f5ee':'#f7f2e8'};font-weight:800;color:${done?'#16764a':'#9a6b24'}">${requirementIcon(q,done)}</span>
         <strong style="font-size:15px;line-height:1.3">${esc(q.label)}</strong>
-        <span style="font-size:12px;color:#738078">${requirementState(q)}</span>
+        <span style="font-size:12px;color:#738078">${requirementState(q,done)}</span>
       </summary>
       <div style="padding:0 18px 17px 56px;border-top:1px solid #edf2ef">
-        <p style="margin:14px 0 14px;color:#56655e;line-height:1.55;max-width:760px">${esc(q.help||'')}</p>
+        <div class="opp-req-guidance"><strong>Hay más de una forma de avanzar.</strong><p>${esc(g.advice||q.help||'')}</p>${official}</div>
         ${doc?`<div class="existing-doc-label" style="margin-bottom:8px">${esc(role||q.label)} · ${esc(doc.name)}</div>`:''}
-        ${action}
+        <div class="opp-req-actions">${docActions}${upload}${manual}</div>
       </div>
     </details>`;
   };
@@ -34,10 +37,10 @@
     if(!o)return `<section class="page"><h1>No encontrada</h1></section>`;
     sync(o);
     const req=o.requirements||[];
-    req.forEach(q=>{if(q.type==='document')q.state=linkedDoc(q)?'ready':'action'});
-    const ready=req.filter(x=>x.state==='ready').length;
+    const prepared=q=>q.state==='ready'||!!linkedDoc(q);
+    const ready=req.filter(prepared).length;
     const todo=req.length-ready;
-    const next=req.find(x=>x.state!=='ready');
+    const next=req.find(q=>!prepared(q));
     return `<section class="page">
       <a class="back-link" href="#opportunities">‹ Oportunidades</a>
       <div class="opp-hero" style="padding-bottom:18px">
@@ -50,10 +53,10 @@
           ${fact('Lugar',o.city||o.country||'')}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-          <div class="state-strip" style="display:block;padding:14px 16px"><b style="font-size:22px">${ready}</b><small style="display:block">Listo</small></div>
-          <div class="state-strip" style="display:block;padding:14px 16px"><b style="font-size:22px">${todo}</b><small style="display:block">Por hacer</small></div>
+          <div class="state-strip" style="display:block;padding:14px 16px"><b style="font-size:22px">${ready}</b><small style="display:block">Preparado</small></div>
+          <div class="state-strip" style="display:block;padding:14px 16px"><b style="font-size:22px">${todo}</b><small style="display:block">Por preparar</small></div>
         </div>
-        ${next?`<div style="margin-top:12px;padding:15px 18px;border:1px solid #cfe2d7;border-radius:16px;background:#f6fbf8"><span style="display:block;text-transform:uppercase;letter-spacing:.04em;font-size:11px;font-weight:800;color:#198754;margin-bottom:4px">Siguiente paso</span><strong>${esc(next.label)}</strong></div>`:''}
+        ${next?`<div style="margin-top:12px;padding:15px 18px;border:1px solid #cfe2d7;border-radius:16px;background:#f6fbf8"><span style="display:block;text-transform:uppercase;letter-spacing:.04em;font-size:11px;font-weight:800;color:#198754;margin-bottom:4px">Un siguiente paso posible</span><strong>${esc(next.label)}</strong><small style="display:block;margin-top:5px;color:#5f7067">No tiene que quedar perfecto hoy: abre el punto y guarda el mejor respaldo que ya tengas.</small></div>`:''}
       </div>
 
       <div style="margin:16px 0 18px">
@@ -62,7 +65,8 @@
       </div>
 
       <div style="margin:18px 0 10px">
-        <h2 style="font-size:16px;margin:0 0 10px">Qué hay que hacer</h2>
+        <h2 style="font-size:16px;margin:0 0 4px">Preparar el dossier</h2>
+        <p style="margin:0 0 12px;color:#697970;line-height:1.5">No necesitas tener todos los requisitos resueltos de una vez. Abre cada punto para ver opciones concretas, guardar un respaldo y seguir avanzando.</p>
         ${req.map(q=>requirementDetails(o,q)).join('')}
       </div>
 
@@ -83,7 +87,7 @@
         const o=state.opportunities.find(x=>x.id===btn.dataset.opportunity);
         const q=(o?.requirements||[]).find(x=>x.id===btn.dataset.requirementDone);
         if(!q)return;
-        q.state=q.state==='ready'?'action':'ready';
+        q.state=(q.state==='ready'||!!linkedDoc(q))?'action':'ready';
         save();render();
       };
     });
