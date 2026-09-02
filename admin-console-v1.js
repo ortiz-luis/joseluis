@@ -1,5 +1,5 @@
 (() => {
-  let workspaces=null,loading=false;
+  let workspaces=null,loading=false,timedOut=false;
   const info=()=>window.postulaWorkspace?.info?.()||null;
   const isAdmin=()=>!!info()?.isAdmin;
   const session=()=>window.postulaAuth?.getSession?.()||null;
@@ -13,9 +13,15 @@
     finally{loading=false;if(route().page==='admin')render()}
   }
 
+  function loadingError(){
+    const err=window.postulaWorkspace?.lastError?.();
+    if(!err&&!timedOut)return null;
+    return `<section class="page final-page"><h1>No se pudo cargar Administración</h1><p>${esc(err||'La comprobación de permisos está tardando demasiado.')}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px"><button class="button primary" data-admin-retry>Reintentar</button><button class="button soft" data-admin-signout>Cerrar sesión</button></div></section>`;
+  }
+
   function adminPage(){
     const i=info();
-    if(!i)return '<section class="page final-page"><h1>Cargando administración…</h1><p>Comprobando tu cuenta y permisos.</p></section>';
+    if(!i)return loadingError()||'<section class="page final-page"><h1>Cargando administración…</h1><p>Comprobando tu cuenta y permisos.</p></section>';
     if(!i.isAdmin)return '<section class="page final-page"><h1>Sin acceso</h1><p>Esta sección sólo está disponible para el administrador.</p></section>';
     const u=session()?.user,ws=workspaces||[];
     const users=new Set(ws.flatMap(w=>(w.members||[]).map(m=>m.user_id))).size;
@@ -43,7 +49,7 @@
           <div><span>Documentos cargados</span><strong>${state?.documents?.filter?.(d=>d.status==='ready').length||0}</strong></div>
         </div>
       </section>
-      <section class="admin-card"><div class="admin-card-head"><div><h2>Prueba de permisos</h2><p>Para comprobar la experiencia real del usuario normal, cierra sesión y entra con tu segundo correo. La sección Administración y los controles de sistema desaparecerán.</p></div></div></section>
+      <section class="admin-card"><div class="admin-card-head"><div><h2>Prueba de permisos</h2><p>Para comprobar la experiencia real del usuario normal, cierra sesión y entra con tu segundo correo. La sección Administración y los controles de sistema desaparecerán.</p></div></div><button class="button soft" data-admin-signout>Cerrar sesión</button></section>
     </section>`;
   }
 
@@ -77,18 +83,23 @@
       try{await window.postulaWorkspace.switchWorkspace(btn.dataset.adminWorkspace);workspaces=await window.postulaWorkspace.listWorkspaces();location.hash='#home';render()}
       catch(err){alert('No se pudo abrir el espacio: '+err.message);btn.disabled=false;btn.textContent='Abrir'}
     });
+    document.querySelectorAll('[data-admin-retry]').forEach(btn=>btn.onclick=async()=>{timedOut=false;btn.disabled=true;btn.textContent='Reintentando…';try{await window.postulaWorkspace?.reload?.();if(isAdmin())await refreshWorkspaces();render()}catch{render()}});
+    document.querySelectorAll('[data-admin-signout]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;btn.textContent='Saliendo…';try{await window.postulaAuth?.signOut?.()}catch{btn.disabled=false;btn.textContent='Cerrar sesión'}});
   }
 
   const oldAddOpp=typeof addOpp==='function'?addOpp:null;
   if(oldAddOpp){window.addOpp=function(){if(!isAdmin()){alert('Sólo el administrador puede crear oportunidades.');return;}return oldAddOpp()}}
 
-  window.addEventListener('postula-workspace-ready',()=>{if(isAdmin())refreshWorkspaces();enforceRoleUI();render()});
+  window.addEventListener('postula-workspace-ready',()=>{timedOut=false;if(isAdmin())refreshWorkspaces();enforceRoleUI();render()});
+  window.addEventListener('postula-workspace-error',()=>{if(route().page==='admin')render()});
   window.addEventListener('hashchange',()=>{if(route().page==='admin'&&isAdmin()&&!workspaces)refreshWorkspaces()});
   let tries=0;const boot=()=>{
     if(info()){
+      timedOut=false;
       if(isAdmin())refreshWorkspaces();
       enforceRoleUI();
       if(route().page==='admin')render();
-    }else if(++tries<80)setTimeout(boot,150)
+    }else if(++tries<30)setTimeout(boot,150);
+    else{timedOut=true;if(route().page==='admin')render()}
   };boot();
 })();
