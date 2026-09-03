@@ -15,6 +15,19 @@
     return data;
   }
 
+  async function recordLoginEvent(session){
+    const access=session?.access_token;if(!access)return null;
+    try{
+      const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/record_login_event`,{
+        method:'POST',
+        headers:{...apiHeaders(),Authorization:`Bearer ${access}`},
+        body:JSON.stringify({p_user_agent:navigator.userAgent||''})
+      });
+      if(!res.ok)throw new Error(`login event ${res.status}`);
+      return await res.json().catch(()=>null);
+    }catch(err){console.warn('Login event could not be recorded',err);return null}
+  }
+
   async function captureEmailSession(){
     const raw=location.hash.startsWith('#')?location.hash.slice(1):'';
     if(!raw.includes('access_token='))return null;
@@ -25,6 +38,7 @@
     const s={access_token,refresh_token,expires_in,expires_at:Math.floor(Date.now()/1000)+expires_in,token_type:p.get('token_type')||'bearer'};
     try{s.user=await authFetch('/auth/v1/user',{headers:{Authorization:`Bearer ${access_token}`}})}catch{return null}
     saveSession(s);
+    await recordLoginEvent(s);
     history.replaceState(null,'',location.pathname+location.search+'#home');
     return s;
   }
@@ -58,7 +72,7 @@
 
   async function signIn(email,password){
     const s=await authFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
-    saveSession(s);return s;
+    saveSession(s);await recordLoginEvent(s);return s;
   }
   async function signUp(email,password){
     return authFetch('/auth/v1/signup?redirect_to='+encodeURIComponent(APP_URL),{method:'POST',body:JSON.stringify({email,password})});
@@ -87,7 +101,7 @@
     const el=gate();
     const form=el.querySelector('#auth-form'),signup=el.querySelector('#auth-signup');
     form.onsubmit=async e=>{e.preventDefault();setBusy(true);message('Entrando…');try{const email=el.querySelector('#auth-email').value.trim(),password=el.querySelector('#auth-password').value;const session=await signIn(email,password);unlock(session)}catch(err){message(err.message,'error')}finally{setBusy(false)}};
-    signup.onclick=async()=>{setBusy(true);message('Creando cuenta…');try{const email=el.querySelector('#auth-email').value.trim(),password=el.querySelector('#auth-password').value;if(!email||password.length<6)throw new Error('Escribe un email y una contraseña de al menos 6 caracteres.');const r=await signUp(email,password);if(r?.access_token){saveSession(r);unlock(r)}else message('Cuenta creada. Revisa tu email para confirmar la cuenta.','ok')}catch(err){message(err.message,'error')}finally{setBusy(false)}};
+    signup.onclick=async()=>{setBusy(true);message('Creando cuenta…');try{const email=el.querySelector('#auth-email').value.trim(),password=el.querySelector('#auth-password').value;if(!email||password.length<6)throw new Error('Escribe un email y una contraseña de al menos 6 caracteres.');const r=await signUp(email,password);if(r?.access_token){saveSession(r);await recordLoginEvent(r);unlock(r)}else message('Cuenta creada. Revisa tu email para confirmar la cuenta.','ok')}catch(err){message(err.message,'error')}finally{setBusy(false)}};
   }
 
   boot();
