@@ -4,77 +4,25 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="theme-color" content="#f5f8f6" />
-  <meta name="description" content="Procesos y documentos, en orden." />
-  <title>Postulaciones Joseluis</title>
-  <link rel="stylesheet" href="styles.css?v=20260831-1525" />
-  <link rel="stylesheet" href="app-v3.css?v=20260901-1418" />
-  <link rel="stylesheet" href="document-builders-v1.css?v=20260901-2140" />
-  <link rel="stylesheet" href="auth-v1.css?v=20260831-1525" />
-  <link rel="stylesheet" href="account-v1.css?v=20260901-2009" />
-  <link rel="stylesheet" href="workspace-admin-v1.css?v=20260902-admin2" />
-  <link rel="stylesheet" href="dark-contrast-v1.css?v=20260901-2012" />
-  <link rel="stylesheet" href="opportunity-filters-v1.css?v=20260901-2120" />
-  <link rel="stylesheet" href="opportunity-controls-v1.css?v=20260901-2148" />
-  <link rel="stylesheet" href="opportunity-interest-v1.css?v=20260901-2342" />
-  <link rel="stylesheet" href="product-ui-v2.css?v=20260902-0438" />
-  <link rel="stylesheet" href="product-ui-final-v1.css?v=20260902-icons1" />
-  <link rel="stylesheet" href="admin-console-v1.css?v=20260902-admin1" />
-  <link rel="stylesheet" href="opportunity-sections-v1.css?v=20260902-0712" />
-  <link rel="stylesheet" href="requirement-guidance-v1.css?v=20260902-2" />
-  <link rel="stylesheet" href="ux-shell-v1.css?v=20260902-logout1" />
-  <link rel="stylesheet" href="session-controls-v1.css?v=20260902-1" />
-  <link rel="stylesheet" href="admin-edit-v1.css?v=20260902-1" />
-  <link rel="stylesheet" href="nav-icons-v1.css?v=20260902-1" />
+  <meta name="description" content="Preparación semanal de 1:1 con Lucas." />
+  <title>Weekly 1:1 — Lucas</title>
+  <link rel="stylesheet" href="styles.css?v=20260905" />
+  <link rel="stylesheet" href="weekly-1on1-v0.css?v=20260905" />
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Navegación principal">
-      <a class="brand" href="#home"><span class="brand-mark">P</span><span>Postulaciones Joseluis</span></a>
+      <a class="brand" href="#home"><span class="brand-mark">1:1</span><span>Weekly 1:1</span></a>
       <nav id="desktop-nav" class="nav-list"></nav>
-      <div class="sidebar-foot"><p>Tus documentos privados se guardan de forma segura en tu cuenta.</p></div>
+      <div class="sidebar-foot"><button class="quiet-button" type="button" onclick="localStorage.removeItem('weekly-1on1-prep-v0');location.reload()">Restablecer datos locales</button></div>
     </aside>
     <header class="topbar">
-      <a class="mobile-brand mobile-only" href="#home"><span class="brand-mark small">P</span>Postulaciones Joseluis</a>
+      <a class="mobile-brand mobile-only" href="#home"><span class="brand-mark small">1:1</span>Weekly 1:1</a>
       <div></div>
     </header>
     <main id="main" class="main" tabindex="-1"></main>
     <nav id="mobile-nav" class="bottom-nav mobile-only" aria-label="Navegación móvil"></nav>
   </div>
-  <dialog id="modal" class="modal"><div id="modal-content"></div></dialog>
-  <input id="file-input" type="file" hidden multiple />
-  <script src="app-v3.js?v=20260831-1525"></script>
-  <script src="gmail-prefill.js?v=20260831-2229"></script>
-  <script src="opportunity-audit.js?v=20260831-2200"></script>
-  <script src="home-clarity-v1.js?v=20260831-2222"></script>
-  <script src="opportunities-deadline-v1.js?v=20260901-2342"></script>
-  <script src="document-ux.js?v=20260831-1525"></script>
-  <script src="document-actions-v3.js?v=20260901-2140"></script>
-  <script src="requirement-guidance-v1.js?v=20260902-1"></script>
-  <script src="corporacion-opcion-guidance-v1.js?v=20260903-1"></script>
-  <script src="catalog-guidance-v1.js?v=20260903-1"></script>
-  <script src="prontopaga-guidance-v1.js?v=20260904-1"></script>
-  <script src="radar-completeness-v1.js?v=20260902-1"></script>
-  <script src="requirement-upload-routing-v1.js?v=20260902-1"></script>
-  <script src="document-builders-v1.js?v=20260901-2140"></script>
-  <script src="opportunity-accordion-v1.js?v=20260902-guidance1"></script>
-  <script src="auth-v1.js?v=20260904-directmail1"></script>
-  <script src="workspace-sync-v1.js?v=20260902-adminload1"></script>
-  <script src="corporacion-opcion-v1.js?v=20260903-1"></script>
-  <script src="opportunity-catalog-sync-v1.js?v=20260903-1"></script>
-  <script src="account-v1.js?v=20260901-2009"></script>
-  <script src="workspace-admin-v1.js?v=20260902-logout1"></script>
-  <script src="global-controls-v1.js?v=20260901-2009"></script>
-  <script src="documents-backend-v3.js?v=20260901-2140"></script>
-  <script src="admin-document-backend-v1.js?v=20260902-1"></script>
-  <script src="ui-cleanup-v1.js?v=20260831-2222"></script>
-  <script src="product-ui-v2.js?v=20260902-user1"></script>
-  <script src="product-ui-final-v1.js?v=20260902-icons1"></script>
-  <script src="admin-console-v1.js?v=20260902-adminload1"></script>
-  <script src="opportunity-sections-v1.js?v=20260902-guidance1"></script>
-  <script src="ux-shell-v1.js?v=20260902-logout1"></script>
-  <script src="session-controls-v1.js?v=20260902-1"></script>
-  <script src="admin-edit-v1.js?v=20260902-1"></script>
-  <script src="recents-cleanup-v1.js?v=20260902-1"></script>
-  <script src="nav-icons-v1.js?v=20260902-1"></script>
+  <script src="weekly-1on1-v0.js?v=20260905"></script>
 </body>
 </html>
