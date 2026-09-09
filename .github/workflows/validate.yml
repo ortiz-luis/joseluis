@@ -1,9 +1,8 @@
 name: Validate portal
 
+# Archived 2026-09-09: manual only. No push/PR-triggered GitHub Actions.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

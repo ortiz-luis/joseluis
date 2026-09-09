@@ -1,8 +1,7 @@
 name: Deploy portal to GitHub Pages
 
+# Archived 2026-09-09: manual only. No push-triggered GitHub Actions.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
